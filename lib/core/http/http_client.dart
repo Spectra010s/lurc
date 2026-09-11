@@ -18,6 +18,7 @@ class LurcHttpClient {
           method: request.method.name.toUpperCase(),
           headers: request.headers,
           responseType: ResponseType.plain,
+          validateStatus: (_) => true,
         ),
         queryParameters: request.queryParameters,
         data: request.body,
