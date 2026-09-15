@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - main
+      - ci/android-build
   push:
     branches:
       - main
@@ -33,21 +34,39 @@ jobs:
           flutter-version: '3.47.3'
           cache: true
 
-      - name: Install dependencies
-        run: flutter pub get
-
       - name: Accept Android licenses
         run: yes | flutter doctor --android-licenses
 
-      - name: Build debug APK
+      - name: Install Lurc dependencies
+        run: flutter pub get
+
+      - name: Build Lurc debug APK
         run: flutter build apk --debug
 
-      - name: Rename debug APK
+      - name: Rename Lurc debug APK
         run: mv build/app/outputs/flutter-apk/app-debug.apk build/app/outputs/flutter-apk/lurc-app-debug.apk
 
-      - name: Upload debug APK
+      - name: Upload Lurc debug APK
         uses: actions/upload-artifact@v6
         with:
           name: lurc-app-debug
           path: build/app/outputs/flutter-apk/lurc-app-debug.apk
+          if-no-files-found: error
+
+      - name: Install control dependencies
+        working-directory: control/lurc_test
+        run: flutter pub get
+
+      - name: Build control debug APK
+        working-directory: control/lurc_test
+        run: flutter build apk --debug
+
+      - name: Rename control debug APK
+        run: mv control/lurc_test/build/app/outputs/flutter-apk/app-debug.apk control/lurc_test/build/app/outputs/flutter-apk/lurc-control-debug.apk
+
+      - name: Upload control debug APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: lurc-control-debug
+          path: control/lurc_test/build/app/outputs/flutter-apk/lurc-control-debug.apk
           if-no-files-found: error
