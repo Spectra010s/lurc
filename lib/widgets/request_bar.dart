@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lurc/core/http/request.dart';
 
 class RequestBar extends StatelessWidget {
-  const RequestBar({
+  const new({
     required this.method,
     required this.controller,
     required this.loading,
