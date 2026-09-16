@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class RequestEditor extends StatelessWidget {
-  const RequestEditor({
+  const new({
     required this.controller,
     super.key,
   });
