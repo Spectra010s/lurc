@@ -7,12 +7,6 @@ enum HttpMethod {
 }
 
 class HttpRequest {
-  final HttpMethod method;
-  final String url;
-  final Map<String, String> headers;
-  final Map<String, String> queryParameters;
-  final String? body;
-
   const HttpRequest({
     required this.method,
     required this.url,
@@ -20,4 +14,10 @@ class HttpRequest {
     this.queryParameters = const {},
     this.body,
   });
+
+  final HttpMethod method;
+  final String url;
+  final Map<String, String> headers;
+  final Map<String, String> queryParameters;
+  final String? body;
 }
