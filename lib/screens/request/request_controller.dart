@@ -4,7 +4,7 @@ import 'package:lurc/core/http/request.dart';
 import 'package:lurc/core/http/response.dart';
 
 class RequestState {
-  const RequestState({
+  const new({
     this.method = HttpMethod.get,
     this.response,
     this.error,
