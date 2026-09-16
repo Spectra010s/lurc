@@ -7,6 +7,13 @@ class KeyValueEntry {
   final String value;
 }
 
+Map<String, String> keyValueEntriesToMap(List<KeyValueEntry> entries) {
+  return {
+    for (final entry in entries)
+      if (entry.key.trim().isNotEmpty) entry.key.trim(): entry.value,
+  };
+}
+
 class KeyValueEditor extends StatefulWidget {
   const new({
     required this.label,
@@ -43,7 +50,7 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
   }
 
   void _removeRow(int index) {
-    final row = _rows.removeAt(index)..dispose();
+    _rows.removeAt(index).dispose();
     setState(() {});
     _notifyChanged();
   }
