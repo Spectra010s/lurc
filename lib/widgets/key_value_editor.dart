@@ -76,21 +76,26 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
                 style: Theme.of(context).textTheme.titleSmall,
               ),
             ),
-            IconButton(
-              tooltip: 'Add ${widget.label.toLowerCase()}',
+            TextButton.icon(
               onPressed: _addRow,
-              icon: const Icon(Icons.add),
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('Add'),
             ),
           ],
         ),
+        const SizedBox(height: 4),
         for (var index = 0; index < _rows.length; index++)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: TextField(
                     controller: _rows[index].keyController,
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    textInputAction: TextInputAction.next,
                     onChanged: (_) => _notifyChanged(),
                     decoration: const InputDecoration(
                       hintText: 'Key',
@@ -99,11 +104,17 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 Expanded(
                   child: TextField(
                     controller: _rows[index].valueController,
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    textInputAction: TextInputAction.next,
                     onChanged: (_) => _notifyChanged(),
+                    onSubmitted: (_) {
+                      if (index == _rows.length - 1) _addRow();
+                    },
                     decoration: const InputDecoration(
                       hintText: 'Value',
                       border: OutlineInputBorder(),
@@ -112,6 +123,7 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
                   ),
                 ),
                 IconButton(
+                  visualDensity: VisualDensity.compact,
                   tooltip: 'Remove row',
                   onPressed: _rows.length == 1
                       ? null
