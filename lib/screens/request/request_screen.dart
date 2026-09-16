@@ -6,7 +6,7 @@ import 'package:lurc/widgets/request_editor.dart';
 import 'package:lurc/widgets/response_view.dart';
 
 class RequestScreen extends ConsumerStatefulWidget {
-  const RequestScreen({super.key});
+  const new({super.key});
 
   @override
   ConsumerState<RequestScreen> createState() => _RequestScreenState();
