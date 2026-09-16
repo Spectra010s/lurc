@@ -7,7 +7,7 @@ enum HttpMethod {
 }
 
 class HttpRequest {
-  const HttpRequest({
+  const new({
     required this.method,
     required this.url,
     this.headers = const {},
