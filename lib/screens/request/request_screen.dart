@@ -18,6 +18,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
   final _bodyController = TextEditingController();
   List<KeyValueEntry> _queryParameters = const [];
   List<KeyValueEntry> _headers = const [];
+  RequestBodyMode _bodyMode = RequestBodyMode.none;
 
   @override
   void dispose() {
@@ -29,7 +30,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
   Future<void> _sendRequest() async {
     await ref.read(requestControllerProvider.notifier).send(
       url: _urlController.text,
-      body: _bodyController.text,
+      body: _bodyMode == RequestBodyMode.none ? null : _bodyController.text,
       queryParameters: keyValueEntriesToMap(_queryParameters),
       headers: keyValueEntriesToMap(_headers),
     );
@@ -52,22 +53,50 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
             onSend: _sendRequest,
           ),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: DefaultTabController(
+              length: 3,
               child: Column(
                 children: [
-                  KeyValueEditor(
-                    label: 'Query parameters',
-                    onChanged: (entries) => _queryParameters = entries,
+                  const TabBar(
+                    tabs: [
+                      Tab(text: 'Params'),
+                      Tab(text: 'Headers'),
+                      Tab(text: 'Body'),
+                    ],
                   ),
-                  KeyValueEditor(
-                    label: 'Headers',
-                    onChanged: (entries) => _headers = entries,
+                  Expanded(
+                    child: TabBarView(
+                      children: [
+                        SingleChildScrollView(
+                          padding: const EdgeInsets.all(12),
+                          child: KeyValueEditor(
+                            label: 'Query parameters',
+                            onChanged: (entries) => _queryParameters = entries,
+                          ),
+                        ),
+                        SingleChildScrollView(
+                          padding: const EdgeInsets.all(12),
+                          child: KeyValueEditor(
+                            label: 'Headers',
+                            onChanged: (entries) => _headers = entries,
+                          ),
+                        ),
+                        SingleChildScrollView(
+                          padding: const EdgeInsets.all(12),
+                          child: RequestEditor(
+                            controller: _bodyController,
+                            mode: _bodyMode,
+                            onModeChanged: (mode) {
+                              setState(() => _bodyMode = mode);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  RequestEditor(controller: _bodyController),
-                  const SizedBox(height: 12),
+                  const Divider(height: 1),
                   SizedBox(
-                    height: 320,
+                    height: MediaQuery.sizeOf(context).height * 0.38,
                     child: ResponseView(
                       response: request.response,
                       error: request.error,
