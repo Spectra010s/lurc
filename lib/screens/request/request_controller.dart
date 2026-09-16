@@ -46,7 +46,12 @@ class RequestController extends Notifier<RequestState> {
     state = state.copyWith(method: method);
   }
 
-  Future<void> send({required String url, String? body}) async {
+  Future<void> send({
+    required String url,
+    String? body,
+    Map<String, String> queryParameters = const {},
+    Map<String, String> headers = const {},
+  }) async {
     final trimmedUrl = url.trim();
     if (trimmedUrl.isEmpty) {
       state = state.copyWith(error: 'Enter a URL', clearResponse: true);
@@ -64,6 +69,8 @@ class RequestController extends Notifier<RequestState> {
             HttpRequest(
               method: state.method,
               url: trimmedUrl,
+              queryParameters: queryParameters,
+              headers: headers,
               body: body == null || body.isEmpty ? null : body,
             ),
           );
