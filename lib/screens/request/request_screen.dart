@@ -28,11 +28,18 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
   }
 
   Future<void> _sendRequest() async {
+    final headers = keyValueEntriesToMap(_headers);
+    if (_bodyMode == RequestBodyMode.json &&
+        !headers.keys.any((key) => key.toLowerCase() == 'content-type')) {
+      headers['Content-Type'] = 'application/json';
+    }
+
     await ref.read(requestControllerProvider.notifier).send(
       url: _urlController.text,
       body: _bodyMode == RequestBodyMode.none ? null : _bodyController.text,
+      validateJsonBody: _bodyMode == RequestBodyMode.json,
       queryParameters: keyValueEntriesToMap(_queryParameters),
-      headers: keyValueEntriesToMap(_headers),
+      headers: headers,
     );
   }
 
