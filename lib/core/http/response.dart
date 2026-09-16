@@ -1,5 +1,5 @@
 class HttpResponse {
-  const HttpResponse({
+  const new({
     required this.statusCode,
     required this.headers,
     required this.body,
