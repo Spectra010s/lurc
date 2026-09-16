@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lurc/core/http/response.dart';
 
 class ResponseView extends StatelessWidget {
-  const ResponseView({
+  const new({
     required this.response,
     required this.error,
     required this.loading,
