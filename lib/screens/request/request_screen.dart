@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../widgets/request_bar.dart';
-import '../../widgets/request_editor.dart';
-import '../../widgets/response_view.dart';
-import 'request_controller.dart';
+import 'package:lurc/screens/request/request_controller.dart';
+import 'package:lurc/widgets/request_bar.dart';
+import 'package:lurc/widgets/request_editor.dart';
+import 'package:lurc/widgets/response_view.dart';
 
 class RequestScreen extends ConsumerStatefulWidget {
   const RequestScreen({super.key});
@@ -34,6 +33,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
   @override
   Widget build(BuildContext context) {
     final request = ref.watch(requestControllerProvider);
+    final requestController = ref.read(requestControllerProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Lurc')),
@@ -43,7 +43,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
             method: request.method,
             controller: _urlController,
             loading: request.loading,
-            onMethodChanged: ref.read(requestControllerProvider.notifier).setMethod,
+            onMethodChanged: requestController.setMethod,
             onSend: _sendRequest,
           ),
           RequestEditor(controller: _bodyController),
