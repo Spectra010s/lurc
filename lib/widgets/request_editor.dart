@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 class RequestEditor extends StatelessWidget {
-  final TextEditingController controller;
-
-  const RequestEditor({
-    super.key,
+  const new({
     required this.controller,
+    super.key,
   });
+
+  final TextEditingController controller;
 
   @override
   Widget build(BuildContext context) {

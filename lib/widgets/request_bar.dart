@@ -1,22 +1,21 @@
 import 'package:flutter/material.dart';
-
-import '../core/http/request.dart';
+import 'package:lurc/core/http/request.dart';
 
 class RequestBar extends StatelessWidget {
-  final HttpMethod method;
-  final TextEditingController controller;
-  final bool loading;
-  final ValueChanged<HttpMethod> onMethodChanged;
-  final VoidCallback onSend;
-
-  const RequestBar({
-    super.key,
+  const new({
     required this.method,
     required this.controller,
     required this.loading,
     required this.onMethodChanged,
     required this.onSend,
+    super.key,
   });
+
+  final HttpMethod method;
+  final TextEditingController controller;
+  final bool loading;
+  final ValueChanged<HttpMethod> onMethodChanged;
+  final VoidCallback onSend;
 
   @override
   Widget build(BuildContext context) {

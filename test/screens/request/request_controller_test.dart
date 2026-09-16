@@ -20,7 +20,9 @@ void main() {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
-    container.read(requestControllerProvider.notifier).setMethod(HttpMethod.post);
+    container
+        .read(requestControllerProvider.notifier)
+        .setMethod(HttpMethod.post);
 
     expect(container.read(requestControllerProvider).method, HttpMethod.post);
   });

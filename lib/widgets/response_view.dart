@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
-
-import '../core/http/response.dart';
+import 'package:lurc/core/http/response.dart';
 
 class ResponseView extends StatelessWidget {
-  final HttpResponse? response;
-  final String? error;
-  final bool loading;
-
-  const ResponseView({
-    super.key,
+  const new({
     required this.response,
     required this.error,
     required this.loading,
+    super.key,
   });
+
+  final HttpResponse? response;
+  final String? error;
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {

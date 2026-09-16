@@ -1,11 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../core/http/http_client.dart';
-import '../../core/http/request.dart';
-import '../../core/http/response.dart';
+import 'package:lurc/core/http/http_client.dart';
+import 'package:lurc/core/http/request.dart';
+import 'package:lurc/core/http/response.dart';
 
 class RequestState {
-  const RequestState({
+  const new({
     this.method = HttpMethod.get,
     this.response,
     this.error,
@@ -68,8 +67,12 @@ class RequestController extends Notifier<RequestState> {
               body: body == null || body.isEmpty ? null : body,
             ),
           );
-      state = state.copyWith(response: response, loading: false, clearError: true);
-    } catch (error) {
+      state = state.copyWith(
+        response: response,
+        loading: false,
+        clearError: true,
+      );
+    } on Exception catch (error) {
       state = state.copyWith(
         error: error.toString(),
         loading: false,
