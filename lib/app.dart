@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import 'screens/request/request_screen.dart';
+import 'package:lurc/screens/request/request_screen.dart';
 
 class LurcApp extends StatelessWidget {
   const LurcApp({super.key});
