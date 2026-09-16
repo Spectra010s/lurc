@@ -3,7 +3,7 @@ import 'package:lurc/core/http/request.dart';
 import 'package:lurc/core/http/response.dart';
 
 class LurcHttpClient {
-  LurcHttpClient({Dio? dio}) : _dio = dio ?? Dio();
+  new({Dio? dio}) : _dio = dio ?? Dio();
 
   final Dio _dio;
 
@@ -44,7 +44,7 @@ class LurcHttpClient {
 }
 
 class LurcHttpException implements Exception {
-  const LurcHttpException({
+  const new({
     required this.message,
     required this.duration,
   });
