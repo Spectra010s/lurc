@@ -56,6 +56,44 @@ void main() {
     expect(state.error, 'Enter a URL');
   });
 
+  test('rejects a URL without an HTTP scheme', () async {
+    final client = FakeHttpClient();
+    final container = ProviderContainer(
+      overrides: [httpClientProvider.overrideWithValue(client)],
+    );
+    addTearDown(container.dispose);
+
+    await container
+        .read(requestControllerProvider.notifier)
+        .send(url: 'example.com/users');
+
+    expect(client.lastRequest, isNull);
+    expect(
+      container.read(requestControllerProvider).error,
+      'Enter a valid HTTP or HTTPS URL',
+    );
+  });
+
+  test('rejects invalid JSON before transport execution', () async {
+    final client = FakeHttpClient();
+    final container = ProviderContainer(
+      overrides: [httpClientProvider.overrideWithValue(client)],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(requestControllerProvider.notifier).send(
+      url: 'https://example.com',
+      body: '{invalid',
+      validateJsonBody: true,
+    );
+
+    expect(client.lastRequest, isNull);
+    expect(
+      container.read(requestControllerProvider).error,
+      'Request body is not valid JSON',
+    );
+  });
+
   test('passes query parameters and headers to transport', () async {
     final client = FakeHttpClient();
     final container = ProviderContainer(
