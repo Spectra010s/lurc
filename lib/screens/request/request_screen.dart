@@ -19,13 +19,6 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
   List<KeyValueEntry> _queryParameters = const [];
   List<KeyValueEntry> _headers = const [];
 
-  Map<String, String> _toMap(List<KeyValueEntry> entries) {
-    return {
-      for (final entry in entries)
-        if (entry.key.trim().isNotEmpty) entry.key.trim(): entry.value,
-    };
-  }
-
   @override
   void dispose() {
     _urlController.dispose();
@@ -37,8 +30,8 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
     await ref.read(requestControllerProvider.notifier).send(
       url: _urlController.text,
       body: _bodyController.text,
-      queryParameters: _toMap(_queryParameters),
-      headers: _toMap(_headers),
+      queryParameters: keyValueEntriesToMap(_queryParameters),
+      headers: keyValueEntriesToMap(_headers),
     );
   }
 
