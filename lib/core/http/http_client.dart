@@ -1,12 +1,11 @@
 import 'package:dio/dio.dart';
-
-import 'request.dart';
-import 'response.dart';
+import 'package:lurc/core/http/request.dart';
+import 'package:lurc/core/http/response.dart';
 
 class LurcHttpClient {
-  final Dio _dio;
-
   LurcHttpClient({Dio? dio}) : _dio = dio ?? Dio();
+
+  final Dio _dio;
 
   Future<HttpResponse> execute(HttpRequest request) async {
     final stopwatch = Stopwatch()..start();
@@ -45,13 +44,13 @@ class LurcHttpClient {
 }
 
 class LurcHttpException implements Exception {
-  final String message;
-  final Duration duration;
-
   const LurcHttpException({
     required this.message,
     required this.duration,
   });
+
+  final String message;
+  final Duration duration;
 
   @override
   String toString() => message;
