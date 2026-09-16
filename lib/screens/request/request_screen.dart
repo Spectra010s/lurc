@@ -1,28 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/http/http_client.dart';
-import '../../core/http/request.dart';
-import '../../core/http/response.dart';
 import '../../widgets/request_bar.dart';
 import '../../widgets/request_editor.dart';
 import '../../widgets/response_view.dart';
+import 'request_controller.dart';
 
-class RequestScreen extends StatefulWidget {
+class RequestScreen extends ConsumerStatefulWidget {
   const RequestScreen({super.key});
 
   @override
-  State<RequestScreen> createState() => _RequestScreenState();
+  ConsumerState<RequestScreen> createState() => _RequestScreenState();
 }
 
-class _RequestScreenState extends State<RequestScreen> {
+class _RequestScreenState extends ConsumerState<RequestScreen> {
   final _urlController = TextEditingController();
   final _bodyController = TextEditingController();
-  final _client = LurcHttpClient();
-
-  HttpMethod _method = HttpMethod.get;
-  HttpResponse? _response;
-  String? _error;
-  bool _loading = false;
 
   @override
   void dispose() {
@@ -32,56 +25,33 @@ class _RequestScreenState extends State<RequestScreen> {
   }
 
   Future<void> _sendRequest() async {
-    final url = _urlController.text.trim();
-    if (url.isEmpty) {
-      setState(() => _error = 'Enter a URL');
-      return;
-    }
-
-    setState(() {
-      _loading = true;
-      _error = null;
-      _response = null;
-    });
-
-    try {
-      final response = await _client.execute(
-        HttpRequest(
-          method: _method,
-          url: url,
-          body: _bodyController.text.isEmpty ? null : _bodyController.text,
-        ),
-      );
-
-      if (!mounted) return;
-      setState(() => _response = response);
-    } catch (error) {
-      if (!mounted) return;
-      setState(() => _error = error.toString());
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
+    await ref.read(requestControllerProvider.notifier).send(
+      url: _urlController.text,
+      body: _bodyController.text,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final request = ref.watch(requestControllerProvider);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Lurc')),
       body: Column(
         children: [
           RequestBar(
-            method: _method,
+            method: request.method,
             controller: _urlController,
-            loading: _loading,
-            onMethodChanged: (method) => setState(() => _method = method),
+            loading: request.loading,
+            onMethodChanged: ref.read(requestControllerProvider.notifier).setMethod,
             onSend: _sendRequest,
           ),
           RequestEditor(controller: _bodyController),
           Expanded(
             child: ResponseView(
-              response: _response,
-              error: _error,
-              loading: _loading,
+              response: request.response,
+              error: request.error,
+              loading: request.loading,
             ),
           ),
         ],
