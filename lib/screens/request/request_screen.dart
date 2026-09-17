@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lurc/core/http/request_body_type.dart';
+import 'package:lurc/core/http/request_record.dart';
+import 'package:lurc/screens/history/history_screen.dart';
 import 'package:lurc/screens/request/request_controller.dart';
 import 'package:lurc/widgets/key_value_editor.dart';
 import 'package:lurc/widgets/request_bar.dart';
@@ -18,6 +21,8 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
   final _bodyController = TextEditingController();
   List<KeyValueEntry> _queryParameters = const [];
   List<KeyValueEntry> _headers = const [];
+  RequestBodyType _bodyMode = RequestBodyType.none;
+  var _editorRevision = 0;
 
   @override
   void dispose() {
@@ -27,12 +32,42 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
   }
 
   Future<void> _sendRequest() async {
+    final headers = keyValueEntriesToMap(_headers);
+    if (_bodyMode == RequestBodyType.json &&
+        !headers.keys.any((key) => key.toLowerCase() == 'content-type')) {
+      headers['Content-Type'] = 'application/json';
+    }
+
     await ref.read(requestControllerProvider.notifier).send(
       url: _urlController.text,
-      body: _bodyController.text,
+      body: _bodyMode == RequestBodyType.none ? null : _bodyController.text,
+      bodyType: _bodyMode,
+      validateJsonBody: _bodyMode == RequestBodyType.json,
       queryParameters: keyValueEntriesToMap(_queryParameters),
-      headers: keyValueEntriesToMap(_headers),
+      headers: headers,
     );
+  }
+
+  Future<void> _openHistory() async {
+    final record = await Navigator.of(context).push<RequestRecord>(
+      MaterialPageRoute(builder: (_) => const HistoryScreen()),
+    );
+    if (record == null || !mounted) return;
+
+    final snapshot = record.request;
+    ref.read(requestControllerProvider.notifier).setMethod(snapshot.method);
+    setState(() {
+      _urlController.text = snapshot.url;
+      _bodyController.text = snapshot.body ?? '';
+      _queryParameters = snapshot.queryParameters.entries
+          .map((entry) => KeyValueEntry(key: entry.key, value: entry.value))
+          .toList(growable: false);
+      _headers = snapshot.headers.entries
+          .map((entry) => KeyValueEntry(key: entry.key, value: entry.value))
+          .toList(growable: false);
+      _bodyMode = snapshot.bodyType;
+      _editorRevision++;
+    });
   }
 
   @override
@@ -41,7 +76,16 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
     final requestController = ref.read(requestControllerProvider.notifier);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Lurc')),
+      appBar: AppBar(
+        title: const Text('Lurc'),
+        actions: [
+          IconButton(
+            tooltip: 'Request history',
+            onPressed: request.loading ? null : _openHistory,
+            icon: const Icon(Icons.history),
+          ),
+        ],
+      ),
       body: Column(
         children: [
           RequestBar(
@@ -50,24 +94,57 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
             loading: request.loading,
             onMethodChanged: requestController.setMethod,
             onSend: _sendRequest,
+            onCancel: requestController.cancel,
           ),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: DefaultTabController(
+              length: 3,
               child: Column(
                 children: [
-                  KeyValueEditor(
-                    label: 'Query parameters',
-                    onChanged: (entries) => _queryParameters = entries,
+                  const TabBar(
+                    tabs: [
+                      Tab(text: 'Params'),
+                      Tab(text: 'Headers'),
+                      Tab(text: 'Body'),
+                    ],
                   ),
-                  KeyValueEditor(
-                    label: 'Headers',
-                    onChanged: (entries) => _headers = entries,
+                  Expanded(
+                    child: TabBarView(
+                      children: [
+                        SingleChildScrollView(
+                          padding: const EdgeInsets.all(12),
+                          child: KeyValueEditor(
+                            key: ValueKey('params-$_editorRevision'),
+                            label: 'Query parameters',
+                            initialEntries: _queryParameters,
+                            onChanged: (entries) => _queryParameters = entries,
+                          ),
+                        ),
+                        SingleChildScrollView(
+                          padding: const EdgeInsets.all(12),
+                          child: KeyValueEditor(
+                            key: ValueKey('headers-$_editorRevision'),
+                            label: 'Headers',
+                            initialEntries: _headers,
+                            onChanged: (entries) => _headers = entries,
+                          ),
+                        ),
+                        SingleChildScrollView(
+                          padding: const EdgeInsets.all(12),
+                          child: RequestEditor(
+                            controller: _bodyController,
+                            mode: _bodyMode,
+                            onModeChanged: (mode) {
+                              setState(() => _bodyMode = mode);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  RequestEditor(controller: _bodyController),
-                  const SizedBox(height: 12),
+                  const Divider(height: 1),
                   SizedBox(
-                    height: 320,
+                    height: MediaQuery.sizeOf(context).height * 0.38,
                     child: ResponseView(
                       response: request.response,
                       error: request.error,

@@ -1,15 +1,20 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lurc/core/http/http_client.dart';
 import 'package:lurc/core/http/request.dart';
 import 'package:lurc/core/http/response.dart';
 import 'package:lurc/screens/request/request_controller.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FakeHttpClient extends LurcHttpClient {
   HttpRequest? lastRequest;
 
   @override
-  Future<HttpResponse> execute(HttpRequest request) async {
+  Future<HttpResponse> execute(
+    HttpRequest request, {
+    CancelToken? cancelToken,
+  }) async {
     lastRequest = request;
     return const HttpResponse(
       statusCode: 200,
@@ -21,6 +26,12 @@ class FakeHttpClient extends LurcHttpClient {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
   test('starts with GET and no request result', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
@@ -54,6 +65,44 @@ void main() {
     expect(state.loading, isFalse);
     expect(state.response, isNull);
     expect(state.error, 'Enter a URL');
+  });
+
+  test('rejects a URL without an HTTP scheme', () async {
+    final client = FakeHttpClient();
+    final container = ProviderContainer(
+      overrides: [httpClientProvider.overrideWithValue(client)],
+    );
+    addTearDown(container.dispose);
+
+    await container
+        .read(requestControllerProvider.notifier)
+        .send(url: 'example.com/users');
+
+    expect(client.lastRequest, isNull);
+    expect(
+      container.read(requestControllerProvider).error,
+      'Enter a valid HTTP or HTTPS URL',
+    );
+  });
+
+  test('rejects invalid JSON before transport execution', () async {
+    final client = FakeHttpClient();
+    final container = ProviderContainer(
+      overrides: [httpClientProvider.overrideWithValue(client)],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(requestControllerProvider.notifier).send(
+      url: 'https://example.com',
+      body: '{invalid',
+      validateJsonBody: true,
+    );
+
+    expect(client.lastRequest, isNull);
+    expect(
+      container.read(requestControllerProvider).error,
+      'Request body is not valid JSON',
+    );
   });
 
   test('passes query parameters and headers to transport', () async {

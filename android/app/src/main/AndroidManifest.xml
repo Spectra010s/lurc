@@ -4,7 +4,8 @@
     <application
         android:label="Lurc"
         android:name="${applicationName}"
-        android:icon="@drawable/lurc_icon">
+        android:icon="@drawable/lurc_icon"
+        android:usesCleartextTraffic="true">
         <activity
             android:name=".MainActivity"
             android:exported="true"
