@@ -7,16 +7,22 @@ class LurcHttpClient {
 
   final Dio _dio;
 
-  Future<HttpResponse> execute(HttpRequest request) async {
+  Future<HttpResponse> execute(
+    HttpRequest request, {
+    CancelToken? cancelToken,
+  }) async {
     final stopwatch = Stopwatch()..start();
 
     try {
       final response = await _dio.request<String>(
         request.url,
+        cancelToken: cancelToken,
         options: Options(
           method: request.method.name.toUpperCase(),
           headers: request.headers,
           responseType: ResponseType.plain,
+          sendTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 30),
           validateStatus: (_) => true,
         ),
         queryParameters: request.queryParameters,
@@ -36,10 +42,24 @@ class LurcHttpClient {
     } on DioException catch (error) {
       stopwatch.stop();
       throw LurcHttpException(
-        message: error.message ?? 'Request failed',
+        message: _messageFor(error),
         duration: stopwatch.elapsed,
+        cancelled: error.type == DioExceptionType.cancel,
       );
     }
+  }
+
+  String _messageFor(DioException error) {
+    return switch (error.type) {
+      DioExceptionType.cancel => 'Request cancelled',
+      DioExceptionType.connectionTimeout ||
+      DioExceptionType.sendTimeout ||
+      DioExceptionType.receiveTimeout => 'Request timed out',
+      DioExceptionType.connectionError =>
+        'Could not connect to the server. Check the address and your network.',
+      DioExceptionType.badCertificate => 'The server certificate is not trusted.',
+      _ => error.message ?? 'Request failed',
+    };
   }
 }
 
@@ -47,10 +67,12 @@ class LurcHttpException implements Exception {
   const new({
     required this.message,
     required this.duration,
+    this.cancelled = false,
   });
 
   final String message;
   final Duration duration;
+  final bool cancelled;
 
   @override
   String toString() => message;
