@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 
 class KeyValueEntry {
-  const new({required this.key, required this.value});
+  const new({
+    required this.key,
+    required this.value,
+    this.enabled = true,
+  });
 
   final String key;
   final String value;
+  final bool enabled;
 }
 
 Map<String, String> keyValueEntriesToMap(List<KeyValueEntry> entries) {
   return {
     for (final entry in entries)
-      if (entry.key.trim().isNotEmpty) entry.key.trim(): entry.value,
+      if (entry.enabled && entry.key.trim().isNotEmpty)
+        entry.key.trim(): entry.value,
   };
 }
 
@@ -38,6 +44,7 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
             (row) => KeyValueEntry(
               key: row.keyController.text,
               value: row.valueController.text,
+              enabled: row.enabled,
             ),
           )
           .toList(growable: false),
@@ -52,6 +59,11 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
   void _removeRow(int index) {
     _rows.removeAt(index).dispose();
     setState(() {});
+    _notifyChanged();
+  }
+
+  void _setEnabled(int index, bool enabled) {
+    setState(() => _rows[index].enabled = enabled);
     _notifyChanged();
   }
 
@@ -90,6 +102,12 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Checkbox(
+                  value: _rows[index].enabled,
+                  tooltip: _rows[index].enabled ? 'Disable row' : 'Enable row',
+                  onChanged: (value) => _setEnabled(index, value ?? true),
+                  visualDensity: VisualDensity.compact,
+                ),
                 Expanded(
                   child: TextField(
                     controller: _rows[index].keyController,
@@ -141,6 +159,7 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
 class _EditorRow {
   final keyController = TextEditingController();
   final valueController = TextEditingController();
+  bool enabled = true;
 
   void dispose() {
     keyController.dispose();
