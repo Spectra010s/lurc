@@ -1,4 +1,5 @@
 import 'package:lurc/core/http/request.dart';
+import 'package:lurc/core/http/request_body_type.dart';
 import 'package:lurc/core/http/request_record.dart';
 import 'package:lurc/core/http/request_snapshot.dart';
 
@@ -10,7 +11,7 @@ Map<String, Object?> requestRecordToJson(RequestRecord record) => {
       'headers': record.request.headers,
       'queryParameters': record.request.queryParameters,
       'body': record.request.body,
-      'bodyType': record.request.bodyType,
+      'bodyType': record.request.bodyType.name,
       'statusCode': record.statusCode,
       'durationMs': record.durationMs,
     };
@@ -20,6 +21,11 @@ RequestRecord requestRecordFromJson(Map<String, Object?> json) {
   final method = HttpMethod.values.firstWhere(
     (value) => value.name == methodName,
     orElse: () => HttpMethod.get,
+  );
+  final bodyTypeName = json['bodyType'] as String? ?? RequestBodyType.none.name;
+  final bodyType = RequestBodyType.values.firstWhere(
+    (value) => value.name == bodyTypeName,
+    orElse: () => RequestBodyType.none,
   );
 
   return RequestRecord(
@@ -31,7 +37,7 @@ RequestRecord requestRecordFromJson(Map<String, Object?> json) {
       headers: _stringMap(json['headers']),
       queryParameters: _stringMap(json['queryParameters']),
       body: json['body'] as String?,
-      bodyType: json['bodyType'] as String? ?? 'none',
+      bodyType: bodyType,
     ),
     statusCode: json['statusCode'] as int?,
     durationMs: json['durationMs'] as int?,
