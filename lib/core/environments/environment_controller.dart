@@ -13,7 +13,10 @@ final environmentsControllerProvider =
       EnvironmentsController.new,
     );
 
-final activeEnvironmentIdProvider = StateProvider<String?>((ref) => null);
+final activeEnvironmentIdProvider =
+    NotifierProvider<ActiveEnvironmentIdController, String?>(
+      ActiveEnvironmentIdController.new,
+    );
 
 final activeEnvironmentProvider = Provider<Environment?>((ref) {
   final id = ref.watch(activeEnvironmentIdProvider);
@@ -25,11 +28,18 @@ final activeEnvironmentProvider = Provider<Environment?>((ref) {
   return null;
 });
 
+class ActiveEnvironmentIdController extends Notifier<String?> {
+  @override
+  String? build() => null;
+
+  void select(String? id) => state = id;
+}
+
 class EnvironmentsController extends AsyncNotifier<List<Environment>> {
   @override
   Future<List<Environment>> build() async {
     final repository = await ref.watch(environmentRepositoryProvider.future);
-    return repository.load();
+    return await repository.load();
   }
 
   Future<void> save(Environment environment) async {
@@ -45,7 +55,7 @@ class EnvironmentsController extends AsyncNotifier<List<Environment>> {
     final next = await repository.delete(id);
     if (ref.mounted) state = AsyncData(next);
     if (ref.read(activeEnvironmentIdProvider) == id) {
-      ref.read(activeEnvironmentIdProvider.notifier).state = null;
+      ref.read(activeEnvironmentIdProvider.notifier).select(null);
     }
   }
 }
