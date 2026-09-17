@@ -120,11 +120,15 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Checkbox(
-                  value: _rows[index].enabled,
-                  tooltip: _rows[index].enabled ? 'Disable row' : 'Enable row',
-                  onChanged: (value) => _setEnabled(index, value ?? true),
-                  visualDensity: VisualDensity.compact,
+                Tooltip(
+                  message: _rows[index].enabled
+                      ? 'Disable row'
+                      : 'Enable row',
+                  child: Checkbox(
+                    value: _rows[index].enabled,
+                    onChanged: (value) => _setEnabled(index, value ?? true),
+                    visualDensity: VisualDensity.compact,
+                  ),
                 ),
                 Expanded(
                   child: TextField(
@@ -175,7 +179,7 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
 }
 
 class _EditorRow {
-  _EditorRow({String key = '', String value = '', this.enabled = true})
+  new({String key = '', String value = '', this.enabled = true})
       : keyController = TextEditingController(text: key),
         valueController = TextEditingController(text: value);
 
