@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-enum RequestBodyMode { none, json, text }
+import 'package:lurc/core/http/request_body_type.dart';
 
 class RequestEditor extends StatelessWidget {
   const new({
@@ -11,8 +10,8 @@ class RequestEditor extends StatelessWidget {
   });
 
   final TextEditingController controller;
-  final RequestBodyMode mode;
-  final ValueChanged<RequestBodyMode> onModeChanged;
+  final RequestBodyType mode;
+  final ValueChanged<RequestBodyType> onModeChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -21,16 +20,16 @@ class RequestEditor extends StatelessWidget {
       children: [
         Text('Body', style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: 8),
-        SegmentedButton<RequestBodyMode>(
+        SegmentedButton<RequestBodyType>(
           segments: const [
-            ButtonSegment(value: RequestBodyMode.none, label: Text('None')),
-            ButtonSegment(value: RequestBodyMode.json, label: Text('JSON')),
-            ButtonSegment(value: RequestBodyMode.text, label: Text('Text')),
+            ButtonSegment(value: RequestBodyType.none, label: Text('None')),
+            ButtonSegment(value: RequestBodyType.json, label: Text('JSON')),
+            ButtonSegment(value: RequestBodyType.text, label: Text('Text')),
           ],
           selected: {mode},
           onSelectionChanged: (selection) => onModeChanged(selection.first),
         ),
-        if (mode != RequestBodyMode.none) ...[
+        if (mode != RequestBodyType.none) ...[
           const SizedBox(height: 12),
           TextField(
             controller: controller,
@@ -41,7 +40,7 @@ class RequestEditor extends StatelessWidget {
             autocorrect: false,
             enableSuggestions: false,
             decoration: InputDecoration(
-              hintText: mode == RequestBodyMode.json
+              hintText: mode == RequestBodyType.json
                   ? '{"key":"value"}'
                   : 'Request body',
               border: const OutlineInputBorder(),
