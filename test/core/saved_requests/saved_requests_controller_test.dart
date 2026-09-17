@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lurc/core/http/request.dart';
@@ -152,27 +150,27 @@ void main() {
     );
     addTearDown(failed.dispose);
 
-    final firstError = Completer<Object>();
-    final subscription = failed.listen(
-      savedRequestsControllerProvider,
-      (_, next) {
-        if (next case AsyncError(:final error)) {
-          if (!firstError.isCompleted) firstError.complete(error);
-        }
-      },
-      fireImmediately: true,
+    // Riverpod 3 can dispose an asynchronously loading provider when `.future`
+    // is only read. Listening to the future keeps the provider alive until the
+    // computation settles.
+    final failedLoad = failed.listen(
+      savedRequestsControllerProvider.future,
+      (_, _) {},
     );
-    addTearDown(subscription.close);
-
-    expect(await firstError.future, isA<FormatException>());
-    expect(subscription.read().hasError, isTrue);
+    addTearDown(failedLoad.close);
+    await expectLater(failedLoad.read(), throwsFormatException);
+    expect(failed.read(savedRequestsControllerProvider).hasError, isTrue);
 
     repository.shouldFail = false;
     failed.invalidate(savedRequestsControllerProvider);
-    expect(
-      (await failed.read(savedRequestsControllerProvider.future)).requests,
-      isEmpty,
+
+    final recoveredLoad = failed.listen(
+      savedRequestsControllerProvider.future,
+      (_, _) {},
     );
+    addTearDown(recoveredLoad.close);
+    expect((await recoveredLoad.read()).requests, isEmpty);
+    expect(failed.read(savedRequestsControllerProvider).hasValue, isTrue);
   });
 }
 
