@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lurc/core/http/request.dart';
 import 'package:lurc/core/http/request_body_type.dart';
 import 'package:lurc/core/http/request_record.dart';
+import 'package:lurc/core/saved_requests/collection.dart';
 import 'package:lurc/core/saved_requests/saved_request.dart';
+import 'package:lurc/core/saved_requests/saved_requests_controller.dart';
 import 'package:lurc/screens/collections/collections_screen.dart';
 import 'package:lurc/screens/history/history_screen.dart';
 import 'package:lurc/screens/request/request_controller.dart';
@@ -50,7 +53,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
   }
 
   void _loadSnapshot({
-    required dynamic method,
+    required HttpMethod method,
     required String url,
     required String? body,
     required RequestBodyType bodyType,
@@ -103,17 +106,53 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
     );
   }
 
+  Future<void> _saveRequest(HttpMethod method) async {
+    final library = await ref.read(savedRequestsControllerProvider.future);
+    if (!mounted) return;
+    final result = await showDialog<_SaveRequestResult>(
+      context: context,
+      builder: (context) => _SaveRequestDialog(collections: library.collections),
+    );
+    if (result == null || result.name.isEmpty) return;
+
+    final id = DateTime.now().microsecondsSinceEpoch.toString();
+    await ref.read(savedRequestsControllerProvider.notifier).saveRequest(
+      SavedRequest(
+        id: id,
+        name: result.name,
+        method: method,
+        url: _urlController.text.trim(),
+        collectionId: result.collectionId,
+        queryParameters: keyValueEntriesToMap(_queryParameters),
+        headers: keyValueEntriesToMap(_headers),
+        body: _bodyMode == RequestBodyType.none ? null : _bodyController.text,
+        bodyType: _bodyMode,
+      ),
+    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Saved “${result.name}”')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final request = ref.watch(requestControllerProvider);
     final requestController = ref.read(requestControllerProvider.notifier);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Lurc')),
-      drawer: _WorkspaceDrawer(
-        onHistory: _openHistory,
-        onCollections: _openCollections,
+      appBar: AppBar(
+        title: const Text('Lurc'),
+        actions: [
+          IconButton(
+            tooltip: 'Save request',
+            onPressed: request.loading ? null : () => _saveRequest(request.method),
+            icon: const Icon(Icons.bookmark_add_outlined),
+          ),
+        ],
       ),
+      drawer: _WorkspaceDrawer(onHistory: _openHistory, onCollections: _openCollections),
       body: Column(
         children: [
           RequestBar(
@@ -129,9 +168,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
               length: 3,
               child: Column(
                 children: [
-                  const TabBar(
-                    tabs: [Tab(text: 'Params'), Tab(text: 'Headers'), Tab(text: 'Body')],
-                  ),
+                  const TabBar(tabs: [Tab(text: 'Params'), Tab(text: 'Headers'), Tab(text: 'Body')]),
                   Expanded(
                     child: TabBarView(
                       children: [
@@ -181,6 +218,72 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
       ),
     );
   }
+}
+
+class _SaveRequestDialog extends StatefulWidget {
+  const new({required this.collections});
+
+  final List<Collection> collections;
+
+  @override
+  State<_SaveRequestDialog> createState() => _SaveRequestDialogState();
+}
+
+class _SaveRequestDialogState extends State<_SaveRequestDialog> {
+  final _nameController = TextEditingController();
+  String? _collectionId;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: const Text('Save request'),
+    content: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        TextField(
+          controller: _nameController,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'Name'),
+        ),
+        const SizedBox(height: 16),
+        DropdownButtonFormField<String?>(
+          initialValue: _collectionId,
+          decoration: const InputDecoration(labelText: 'Collection'),
+          items: [
+            const DropdownMenuItem<String?>(child: Text('Unfiled')),
+            ...widget.collections.map(
+              (collection) => DropdownMenuItem<String?>(
+                value: collection.id,
+                child: Text(collection.name),
+              ),
+            ),
+          ],
+          onChanged: (value) => setState(() => _collectionId = value),
+        ),
+      ],
+    ),
+    actions: [
+      TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+      FilledButton(
+        onPressed: () => Navigator.pop(
+          context,
+          _SaveRequestResult(_nameController.text.trim(), _collectionId),
+        ),
+        child: const Text('Save'),
+      ),
+    ],
+  );
+}
+
+class _SaveRequestResult {
+  const new(this.name, this.collectionId);
+  final String name;
+  final String? collectionId;
 }
 
 class _WorkspaceDrawer extends StatelessWidget {
