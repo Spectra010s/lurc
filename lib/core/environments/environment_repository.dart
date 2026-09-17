@@ -10,7 +10,7 @@ abstract interface class EnvironmentRepository {
 }
 
 class LocalEnvironmentRepository implements EnvironmentRepository {
-  LocalEnvironmentRepository(this._preferences);
+  LocalEnvironmentRepository.new(this._preferences);
 
   static const _storageKey = 'environments_v1';
   final SharedPreferences _preferences;
@@ -46,7 +46,8 @@ class LocalEnvironmentRepository implements EnvironmentRepository {
 
   @override
   Future<List<Environment>> delete(String id) async {
-    final environments = [...await load()]..removeWhere((item) => item.id == id);
+    final environments = [...await load()]
+      ..removeWhere((item) => item.id == id);
     await _persist(environments);
     return List.unmodifiable(environments);
   }
