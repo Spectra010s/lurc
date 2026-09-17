@@ -3,8 +3,11 @@ import 'package:lurc/core/http/request_history_repository.dart';
 import 'package:lurc/core/http/request_record.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-final requestHistoryRepositoryProvider = FutureProvider<RequestHistoryRepository>(
-  (ref) async => RequestHistoryRepository(await SharedPreferences.getInstance()),
+final requestHistoryRepositoryProvider =
+    FutureProvider<RequestHistoryRepository>(
+  (ref) async => RequestHistoryRepository(
+    await SharedPreferences.getInstance(),
+  ),
 );
 
 final requestHistoryProvider =
