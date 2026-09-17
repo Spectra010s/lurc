@@ -27,18 +27,55 @@ class ResponseView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Waiting for response…'),
+          ],
+        ),
+      );
     }
 
     if (error != null) {
       return SingleChildScrollView(
-        padding: const EdgeInsets.all(12),
-        child: SelectableText(error!),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Request failed',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            SelectableText(error!),
+          ],
+        ),
       );
     }
 
     if (response == null) {
-      return const Center(child: Text('Send a request to see the response.'));
+      return Padding(
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Ready when you are',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Send a request to inspect its status, body, and headers.',
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
     final currentResponse = response!;
@@ -49,16 +86,17 @@ class ResponseView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
             child: Wrap(
               spacing: 12,
               runSpacing: 4,
               children: [
                 Text(
-                  '${currentResponse.statusCode}',
+                  'Status ${currentResponse.statusCode}',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 Text('${currentResponse.duration.inMilliseconds} ms'),
+                Text('${utf8.encode(currentResponse.body).length} bytes'),
               ],
             ),
           ),
@@ -72,11 +110,17 @@ class ResponseView extends StatelessWidget {
             child: TabBarView(
               children: [
                 SingleChildScrollView(
-                  padding: const EdgeInsets.all(12),
-                  child: SelectableText(_formattedBody(currentResponse.body)),
+                  padding: const EdgeInsets.all(16),
+                  child: SelectableText(
+                    currentResponse.body.isEmpty
+                        ? 'Empty response body'
+                        : _formattedBody(currentResponse.body),
+                    style: Theme.of(context).textTheme.bodyMedium
+                        ?.copyWith(fontFamily: 'monospace', height: 1.5),
+                  ),
                 ),
                 ListView(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(16),
                   children: currentResponse.headers.entries
                       .map(
                         (entry) => Padding(

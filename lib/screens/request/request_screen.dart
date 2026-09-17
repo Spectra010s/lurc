@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lurc/core/environments/environment_controller.dart';
 import 'package:lurc/core/http/request.dart';
 import 'package:lurc/core/http/request_body_type.dart';
 import 'package:lurc/core/http/request_record.dart';
@@ -8,12 +7,12 @@ import 'package:lurc/core/saved_requests/collection.dart';
 import 'package:lurc/core/saved_requests/saved_request.dart';
 import 'package:lurc/core/saved_requests/saved_requests_controller.dart';
 import 'package:lurc/screens/collections/collections_screen.dart';
-import 'package:lurc/screens/environments/environments_screen.dart';
 import 'package:lurc/screens/history/history_screen.dart';
 import 'package:lurc/screens/request/request_controller.dart';
 import 'package:lurc/widgets/key_value_editor.dart';
 import 'package:lurc/widgets/request_bar.dart';
 import 'package:lurc/widgets/request_editor.dart';
+import 'package:lurc/widgets/request_workspace.dart';
 import 'package:lurc/widgets/response_view.dart';
 
 class RequestScreen extends ConsumerStatefulWidget {
@@ -108,12 +107,6 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
     );
   }
 
-  Future<void> _openEnvironments() async {
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute(builder: (_) => const EnvironmentsScreen()),
-    );
-  }
-
   Future<void> _saveRequest(HttpMethod method) async {
     final library = await ref.read(savedRequestsControllerProvider.future);
     if (!mounted) return;
@@ -152,40 +145,11 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
   Widget build(BuildContext context) {
     final request = ref.watch(requestControllerProvider);
     final requestController = ref.read(requestControllerProvider.notifier);
-    final environments =
-        ref.watch(environmentsControllerProvider).value ?? const [];
-    final activeEnvironmentId = ref.watch(activeEnvironmentIdProvider);
-    final environmentController =
-        ref.read(activeEnvironmentIdProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Lurc'),
         actions: [
-          PopupMenuButton<String?>(
-            tooltip: 'Active environment',
-            icon: const Icon(Icons.tune_outlined),
-            onSelected: environmentController.select,
-            itemBuilder: (_) => [
-              const PopupMenuItem<String?>(
-                child: Text('No environment'),
-              ),
-              for (final environment in environments)
-                PopupMenuItem<String?>(
-                  value: environment.id,
-                  child: Row(
-                    children: [
-                      if (environment.id == activeEnvironmentId)
-                        const Padding(
-                          padding: EdgeInsets.only(right: 8),
-                          child: Icon(Icons.check, size: 18),
-                        ),
-                      Flexible(child: Text(environment.name)),
-                    ],
-                  ),
-                ),
-            ],
-          ),
           IconButton(
             tooltip: 'Save request',
             onPressed: request.loading
@@ -198,16 +162,13 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
       drawer: _WorkspaceDrawer(
         onHistory: _openHistory,
         onCollections: _openCollections,
-        onEnvironments: _openEnvironments,
       ),
-      body: Column(
-        children: [
-          if (activeEnvironmentId != null)
-            _ActiveEnvironmentBanner(
-              name: ref.watch(activeEnvironmentProvider)?.name ?? 'Environment',
-              onClear: () => environmentController.select(null),
-            ),
-          RequestBar(
+      body: SafeArea(
+        top: false,
+        child: RequestWorkspace(
+          loading: request.loading,
+          result: request.response ?? request.error,
+          requestBar: RequestBar(
             method: request.method,
             controller: _urlController,
             loading: request.loading,
@@ -215,91 +176,62 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
             onSend: _sendRequest,
             onCancel: requestController.cancel,
           ),
-          Expanded(
-            child: DefaultTabController(
-              length: 3,
-              child: Column(
-                children: [
-                  const TabBar(
-                    tabs: [
-                      Tab(text: 'Params'),
-                      Tab(text: 'Headers'),
-                      Tab(text: 'Body'),
+          editor: DefaultTabController(
+            length: 3,
+            child: Column(
+              children: [
+                const TabBar(
+                  tabs: [
+                    Tab(text: 'Params'),
+                    Tab(text: 'Headers'),
+                    Tab(text: 'Body'),
+                  ],
+                ),
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: KeyValueEditor(
+                          key: ValueKey('params-$_editorRevision'),
+                          label: 'Query parameters',
+                          initialEntries: _queryParameters,
+                          onChanged: (entries) => _queryParameters = entries,
+                        ),
+                      ),
+                      SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: KeyValueEditor(
+                          key: ValueKey('headers-$_editorRevision'),
+                          label: 'Headers',
+                          initialEntries: _headers,
+                          onChanged: (entries) => _headers = entries,
+                        ),
+                      ),
+                      SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: RequestEditor(
+                          controller: _bodyController,
+                          mode: _bodyMode,
+                          onModeChanged: (mode) =>
+                              setState(() => _bodyMode = mode),
+                        ),
+                      ),
                     ],
                   ),
-                  Expanded(
-                    child: TabBarView(
-                      children: [
-                        SingleChildScrollView(
-                          padding: const EdgeInsets.all(12),
-                          child: KeyValueEditor(
-                            key: ValueKey('params-$_editorRevision'),
-                            label: 'Query parameters',
-                            initialEntries: _queryParameters,
-                            onChanged: (entries) =>
-                                _queryParameters = entries,
-                          ),
-                        ),
-                        SingleChildScrollView(
-                          padding: const EdgeInsets.all(12),
-                          child: KeyValueEditor(
-                            key: ValueKey('headers-$_editorRevision'),
-                            label: 'Headers',
-                            initialEntries: _headers,
-                            onChanged: (entries) => _headers = entries,
-                          ),
-                        ),
-                        SingleChildScrollView(
-                          padding: const EdgeInsets.all(12),
-                          child: RequestEditor(
-                            controller: _bodyController,
-                            mode: _bodyMode,
-                            onModeChanged: (mode) =>
-                                setState(() => _bodyMode = mode),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Divider(height: 1),
-                  SizedBox(
-                    height: MediaQuery.sizeOf(context).height * 0.38,
-                    child: ResponseView(
-                      response: request.response,
-                      error: request.error,
-                      loading: request.loading,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-        ],
+          response: ResponseView(
+            response: request.response,
+            error: request.error,
+            loading: request.loading,
+          ),
+        ),
       ),
     );
   }
-}
-
-class _ActiveEnvironmentBanner extends StatelessWidget {
-  const new({required this.name, required this.onClear});
-
-  final String name;
-  final VoidCallback onClear;
-
-  @override
-  Widget build(BuildContext context) => Material(
-    color: Theme.of(context).colorScheme.surfaceContainerLow,
-    child: ListTile(
-      dense: true,
-      leading: const Icon(Icons.tune, size: 20),
-      title: Text('Environment: $name'),
-      trailing: IconButton(
-        tooltip: 'Clear environment',
-        onPressed: onClear,
-        icon: const Icon(Icons.close, size: 20),
-      ),
-    ),
-  );
 }
 
 class _SaveRequestDialog extends StatefulWidget {
@@ -375,15 +307,10 @@ class _SaveRequestResult {
 }
 
 class _WorkspaceDrawer extends StatelessWidget {
-  const new({
-    required this.onHistory,
-    required this.onCollections,
-    required this.onEnvironments,
-  });
+  const new({required this.onHistory, required this.onCollections});
 
   final VoidCallback onHistory;
   final VoidCallback onCollections;
-  final VoidCallback onEnvironments;
 
   @override
   Widget build(BuildContext context) => NavigationDrawer(
@@ -391,7 +318,6 @@ class _WorkspaceDrawer extends StatelessWidget {
       Navigator.pop(context);
       if (index == 1) onCollections();
       if (index == 2) onHistory();
-      if (index == 3) onEnvironments();
     },
     children: const [
       Padding(
@@ -418,9 +344,18 @@ class _WorkspaceDrawer extends StatelessWidget {
         icon: Icon(Icons.history),
         label: Text('History'),
       ),
+      Divider(),
       NavigationDrawerDestination(
         icon: Icon(Icons.tune_outlined),
         label: Text('Environments'),
+      ),
+      NavigationDrawerDestination(
+        icon: Icon(Icons.settings_outlined),
+        label: Text('Settings'),
+      ),
+      NavigationDrawerDestination(
+        icon: Icon(Icons.info_outline),
+        label: Text('About'),
       ),
     ],
   );
