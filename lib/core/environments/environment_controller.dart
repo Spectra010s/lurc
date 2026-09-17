@@ -32,6 +32,8 @@ class ActiveEnvironmentIdController extends Notifier<String?> {
   @override
   String? build() => null;
 
+  String? get selectedId => state;
+
   set selectedId(String? id) => state = id;
 }
 
