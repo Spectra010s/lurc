@@ -123,7 +123,30 @@ class RequestController extends Notifier<RequestState> {
         loading: false,
         clearError: true,
       );
+      await _recordRequest(request, response, bodyType);
+    } on LurcHttpException catch (error) {
+      state = state.copyWith(
+        error: error.message,
+        loading: false,
+        clearResponse: true,
+      );
+    } on Exception catch (error) {
+      state = state.copyWith(
+        error: error.toString(),
+        loading: false,
+        clearResponse: true,
+      );
+    } finally {
+      _cancelToken = null;
+    }
+  }
 
+  Future<void> _recordRequest(
+    HttpRequest request,
+    HttpResponse response,
+    String bodyType,
+  ) async {
+    try {
       final now = DateTime.now();
       final repository =
           await ref.read(requestHistoryRepositoryProvider.future);
@@ -144,20 +167,8 @@ class RequestController extends Notifier<RequestState> {
         ),
       );
       ref.invalidate(requestHistoryProvider);
-    } on LurcHttpException catch (error) {
-      state = state.copyWith(
-        error: error.message,
-        loading: false,
-        clearResponse: true,
-      );
-    } on Exception catch (error) {
-      state = state.copyWith(
-        error: error.toString(),
-        loading: false,
-        clearResponse: true,
-      );
-    } finally {
-      _cancelToken = null;
+    } on Exception {
+      // History must never turn a successful HTTP request into a failed one.
     }
   }
 }
