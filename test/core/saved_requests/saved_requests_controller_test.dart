@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lurc/core/http/request.dart';
@@ -149,18 +151,21 @@ void main() {
       ],
     );
     addTearDown(failed.dispose);
+
+    final firstError = Completer<Object>();
     final subscription = failed.listen(
       savedRequestsControllerProvider,
-      (_, _) {},
+      (_, next) {
+        if (next case AsyncError(:final error)) {
+          if (!firstError.isCompleted) firstError.complete(error);
+        }
+      },
       fireImmediately: true,
     );
     addTearDown(subscription.close);
 
-    await expectLater(
-      failed.read(savedRequestsControllerProvider.future),
-      throwsFormatException,
-    );
-    expect(failed.read(savedRequestsControllerProvider).hasError, isTrue);
+    expect(await firstError.future, isA<FormatException>());
+    expect(subscription.read().hasError, isTrue);
 
     repository.shouldFail = false;
     failed.invalidate(savedRequestsControllerProvider);
