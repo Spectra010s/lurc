@@ -27,10 +27,16 @@ RequestRecord requestRecordFromJson(Map<String, Object?> json) {
     (value) => value.name == bodyTypeName,
     orElse: () => RequestBodyType.none,
   );
+  final id = json['id'];
+  final sentAt = json['sentAt'];
+
+  if (id is! String || sentAt is! String) {
+    throw const FormatException('Invalid request history entry');
+  }
 
   return RequestRecord(
-    id: json['id'] as String,
-    sentAt: DateTime.parse(json['sentAt'] as String),
+    id: id,
+    sentAt: DateTime.parse(sentAt),
     request: RequestSnapshot(
       method: method,
       url: json['url'] as String? ?? '',
@@ -45,7 +51,7 @@ RequestRecord requestRecordFromJson(Map<String, Object?> json) {
 }
 
 Map<String, String> _stringMap(Object? value) {
-  if (value is! Map) return const {};
+  if (value is! Map<Object?, Object?>) return const {};
   return value.map(
     (key, item) => MapEntry(key.toString(), item.toString()),
   );
