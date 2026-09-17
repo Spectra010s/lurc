@@ -152,8 +152,11 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
   Widget build(BuildContext context) {
     final request = ref.watch(requestControllerProvider);
     final requestController = ref.read(requestControllerProvider.notifier);
-    final environments = ref.watch(environmentsControllerProvider).value ?? const [];
+    final environments =
+        ref.watch(environmentsControllerProvider).value ?? const [];
     final activeEnvironmentId = ref.watch(activeEnvironmentIdProvider);
+    final environmentController =
+        ref.read(activeEnvironmentIdProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(
@@ -162,8 +165,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
           PopupMenuButton<String?>(
             tooltip: 'Active environment',
             icon: const Icon(Icons.tune_outlined),
-            onSelected: (value) =>
-                ref.read(activeEnvironmentIdProvider.notifier).state = value,
+            onSelected: environmentController.select,
             itemBuilder: (_) => [
               const PopupMenuItem<String?>(
                 child: Text('No environment'),
@@ -203,8 +205,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
           if (activeEnvironmentId != null)
             _ActiveEnvironmentBanner(
               name: ref.watch(activeEnvironmentProvider)?.name ?? 'Environment',
-              onClear: () =>
-                  ref.read(activeEnvironmentIdProvider.notifier).state = null,
+              onClear: () => environmentController.select(null),
             ),
           RequestBar(
             method: request.method,
