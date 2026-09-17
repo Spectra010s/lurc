@@ -24,18 +24,36 @@ class KeyValueEditor extends StatefulWidget {
   const new({
     required this.label,
     required this.onChanged,
+    this.initialEntries = const [],
     super.key,
   });
 
   final String label;
   final ValueChanged<List<KeyValueEntry>> onChanged;
+  final List<KeyValueEntry> initialEntries;
 
   @override
   State<KeyValueEditor> createState() => _KeyValueEditorState();
 }
 
 class _KeyValueEditorState extends State<KeyValueEditor> {
-  final List<_EditorRow> _rows = [_EditorRow()];
+  late final List<_EditorRow> _rows;
+
+  @override
+  void initState() {
+    super.initState();
+    _rows = widget.initialEntries.isEmpty
+        ? [_EditorRow()]
+        : widget.initialEntries
+            .map(
+              (entry) => _EditorRow(
+                key: entry.key,
+                value: entry.value,
+                enabled: entry.enabled,
+              ),
+            )
+            .toList();
+  }
 
   void _notifyChanged() {
     widget.onChanged(
@@ -157,9 +175,13 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
 }
 
 class _EditorRow {
-  final keyController = TextEditingController();
-  final valueController = TextEditingController();
-  bool enabled = true;
+  _EditorRow({String key = '', String value = '', this.enabled = true})
+      : keyController = TextEditingController(text: key),
+        valueController = TextEditingController(text: value);
+
+  final TextEditingController keyController;
+  final TextEditingController valueController;
+  bool enabled;
 
   void dispose() {
     keyController.dispose();
