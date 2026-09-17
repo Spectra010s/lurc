@@ -151,8 +151,11 @@ void main() {
       fireImmediately: true,
     );
     addTearDown(subscription.close);
-    await container.pump();
 
+    await expectLater(
+      container.read(savedRequestsControllerProvider.future),
+      throwsFormatException,
+    );
     final failedState = container.read(savedRequestsControllerProvider);
     expect(failedState.hasError, isTrue);
     expect(failedState.error, isA<FormatException>());
