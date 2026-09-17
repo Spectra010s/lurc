@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lurc/core/http/http_client.dart';
@@ -9,7 +10,10 @@ class FakeHttpClient extends LurcHttpClient {
   HttpRequest? lastRequest;
 
   @override
-  Future<HttpResponse> execute(HttpRequest request) async {
+  Future<HttpResponse> execute(
+    HttpRequest request, {
+    CancelToken? cancelToken,
+  }) async {
     lastRequest = request;
     return const HttpResponse(
       statusCode: 200,
