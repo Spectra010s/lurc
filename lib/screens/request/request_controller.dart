@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lurc/core/http/http_client.dart';
 import 'package:lurc/core/http/request.dart';
@@ -41,11 +42,17 @@ final requestControllerProvider =
     NotifierProvider<RequestController, RequestState>(RequestController.new);
 
 class RequestController extends Notifier<RequestState> {
+  CancelToken? _cancelToken;
+
   @override
   RequestState build() => const RequestState();
 
   void setMethod(HttpMethod method) {
     state = state.copyWith(method: method);
+  }
+
+  void cancel() {
+    _cancelToken?.cancel();
   }
 
   Future<void> send({
@@ -87,6 +94,7 @@ class RequestController extends Notifier<RequestState> {
       }
     }
 
+    _cancelToken = CancelToken();
     state = state.copyWith(
       loading: true,
       clearError: true,
@@ -102,11 +110,18 @@ class RequestController extends Notifier<RequestState> {
               headers: headers,
               body: requestBody,
             ),
+            cancelToken: _cancelToken,
           );
       state = state.copyWith(
         response: response,
         loading: false,
         clearError: true,
+      );
+    } on LurcHttpException catch (error) {
+      state = state.copyWith(
+        error: error.message,
+        loading: false,
+        clearResponse: true,
       );
     } on Exception catch (error) {
       state = state.copyWith(
@@ -114,6 +129,8 @@ class RequestController extends Notifier<RequestState> {
         loading: false,
         clearResponse: true,
       );
+    } finally {
+      _cancelToken = null;
     }
   }
 }
