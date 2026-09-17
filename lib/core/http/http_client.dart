@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:lurc/core/http/http_error.dart';
 import 'package:lurc/core/http/request.dart';
 import 'package:lurc/core/http/response.dart';
 
@@ -41,24 +42,35 @@ class LurcHttpClient {
       );
     } on DioException catch (error) {
       stopwatch.stop();
+      final type = _typeFor(error);
       throw LurcHttpException(
-        message: _messageFor(error),
+        message: _messageFor(type, error),
         duration: stopwatch.elapsed,
-        cancelled: error.type == DioExceptionType.cancel,
+        type: type,
       );
     }
   }
 
-  String _messageFor(DioException error) {
+  HttpErrorType _typeFor(DioException error) {
     return switch (error.type) {
-      DioExceptionType.cancel => 'Request cancelled',
+      DioExceptionType.cancel => HttpErrorType.cancelled,
       DioExceptionType.connectionTimeout ||
       DioExceptionType.sendTimeout ||
-      DioExceptionType.receiveTimeout => 'Request timed out',
-      DioExceptionType.connectionError =>
+      DioExceptionType.receiveTimeout => HttpErrorType.timeout,
+      DioExceptionType.connectionError => HttpErrorType.connection,
+      DioExceptionType.badCertificate => HttpErrorType.certificate,
+      _ => HttpErrorType.other,
+    };
+  }
+
+  String _messageFor(HttpErrorType type, DioException error) {
+    return switch (type) {
+      HttpErrorType.cancelled => 'Request cancelled',
+      HttpErrorType.timeout => 'Request timed out',
+      HttpErrorType.connection =>
         'Could not connect to the server. Check the address and your network.',
-      DioExceptionType.badCertificate => 'The server certificate is not trusted.',
-      _ => error.message ?? 'Request failed',
+      HttpErrorType.certificate => 'The server certificate is not trusted.',
+      HttpErrorType.other => error.message ?? 'Request failed',
     };
   }
 }
@@ -67,12 +79,12 @@ class LurcHttpException implements Exception {
   const new({
     required this.message,
     required this.duration,
-    this.cancelled = false,
+    required this.type,
   });
 
   final String message;
   final Duration duration;
-  final bool cancelled;
+  final HttpErrorType type;
 
   @override
   String toString() => message;
