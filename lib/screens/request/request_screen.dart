@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lurc/core/http/request.dart';
 import 'package:lurc/core/http/request_body_type.dart';
 import 'package:lurc/core/http/request_record.dart';
+import 'package:lurc/core/saved_requests/collection.dart';
+import 'package:lurc/core/saved_requests/saved_request.dart';
+import 'package:lurc/core/saved_requests/saved_requests_controller.dart';
+import 'package:lurc/screens/collections/collections_screen.dart';
 import 'package:lurc/screens/history/history_screen.dart';
 import 'package:lurc/screens/request/request_controller.dart';
 import 'package:lurc/widgets/key_value_editor.dart';
@@ -37,7 +42,6 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
         !headers.keys.any((key) => key.toLowerCase() == 'content-type')) {
       headers['Content-Type'] = 'application/json';
     }
-
     await ref.read(requestControllerProvider.notifier).send(
       url: _urlController.text,
       body: _bodyMode == RequestBodyType.none ? null : _bodyController.text,
@@ -48,26 +52,92 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
     );
   }
 
+  void _loadSnapshot({
+    required HttpMethod method,
+    required String url,
+    required String? body,
+    required RequestBodyType bodyType,
+    required Map<String, String> queryParameters,
+    required Map<String, String> headers,
+  }) {
+    ref.read(requestControllerProvider.notifier).setMethod(method);
+    setState(() {
+      _urlController.text = url;
+      _bodyController.text = body ?? '';
+      _queryParameters = queryParameters.entries
+          .map((entry) => KeyValueEntry(key: entry.key, value: entry.value))
+          .toList(growable: false);
+      _headers = headers.entries
+          .map((entry) => KeyValueEntry(key: entry.key, value: entry.value))
+          .toList(growable: false);
+      _bodyMode = bodyType;
+      _editorRevision++;
+    });
+  }
+
   Future<void> _openHistory() async {
     final record = await Navigator.of(context).push<RequestRecord>(
       MaterialPageRoute(builder: (_) => const HistoryScreen()),
     );
     if (record == null || !mounted) return;
-
     final snapshot = record.request;
-    ref.read(requestControllerProvider.notifier).setMethod(snapshot.method);
-    setState(() {
-      _urlController.text = snapshot.url;
-      _bodyController.text = snapshot.body ?? '';
-      _queryParameters = snapshot.queryParameters.entries
-          .map((entry) => KeyValueEntry(key: entry.key, value: entry.value))
-          .toList(growable: false);
-      _headers = snapshot.headers.entries
-          .map((entry) => KeyValueEntry(key: entry.key, value: entry.value))
-          .toList(growable: false);
-      _bodyMode = snapshot.bodyType;
-      _editorRevision++;
-    });
+    _loadSnapshot(
+      method: snapshot.method,
+      url: snapshot.url,
+      body: snapshot.body,
+      bodyType: snapshot.bodyType,
+      queryParameters: snapshot.queryParameters,
+      headers: snapshot.headers,
+    );
+  }
+
+  Future<void> _openCollections() async {
+    final saved = await Navigator.of(context).push<SavedRequest>(
+      MaterialPageRoute(builder: (_) => const CollectionsScreen()),
+    );
+    if (saved == null || !mounted) return;
+    _loadSnapshot(
+      method: saved.method,
+      url: saved.url,
+      body: saved.body,
+      bodyType: saved.bodyType,
+      queryParameters: saved.queryParameters,
+      headers: saved.headers,
+    );
+  }
+
+  Future<void> _saveRequest(HttpMethod method) async {
+    final library = await ref.read(savedRequestsControllerProvider.future);
+    if (!mounted) return;
+    final result = await showDialog<_SaveRequestResult>(
+      context: context,
+      builder: (context) => _SaveRequestDialog(
+        collections: library.collections,
+      ),
+    );
+    if (result == null || result.name.isEmpty) return;
+
+    final id = DateTime.now().microsecondsSinceEpoch.toString();
+    await ref.read(savedRequestsControllerProvider.notifier).saveRequest(
+      SavedRequest(
+        id: id,
+        name: result.name,
+        method: method,
+        url: _urlController.text.trim(),
+        collectionId: result.collectionId,
+        queryParameters: keyValueEntriesToMap(_queryParameters),
+        headers: keyValueEntriesToMap(_headers),
+        body: _bodyMode == RequestBodyType.none
+            ? null
+            : _bodyController.text,
+        bodyType: _bodyMode,
+      ),
+    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Saved “${result.name}”')),
+      );
+    }
   }
 
   @override
@@ -80,11 +150,17 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
         title: const Text('Lurc'),
         actions: [
           IconButton(
-            tooltip: 'Request history',
-            onPressed: request.loading ? null : _openHistory,
-            icon: const Icon(Icons.history),
+            tooltip: 'Save request',
+            onPressed: request.loading
+                ? null
+                : () => _saveRequest(request.method),
+            icon: const Icon(Icons.bookmark_add_outlined),
           ),
         ],
+      ),
+      drawer: _WorkspaceDrawer(
+        onHistory: _openHistory,
+        onCollections: _openCollections,
       ),
       body: Column(
         children: [
@@ -117,7 +193,8 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
                             key: ValueKey('params-$_editorRevision'),
                             label: 'Query parameters',
                             initialEntries: _queryParameters,
-                            onChanged: (entries) => _queryParameters = entries,
+                            onChanged: (entries) =>
+                                _queryParameters = entries,
                           ),
                         ),
                         SingleChildScrollView(
@@ -134,9 +211,8 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
                           child: RequestEditor(
                             controller: _bodyController,
                             mode: _bodyMode,
-                            onModeChanged: (mode) {
-                              setState(() => _bodyMode = mode);
-                            },
+                            onModeChanged: (mode) =>
+                                setState(() => _bodyMode = mode),
                           ),
                         ),
                       ],
@@ -159,4 +235,131 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
       ),
     );
   }
+}
+
+class _SaveRequestDialog extends StatefulWidget {
+  const new({required this.collections});
+
+  final List<Collection> collections;
+
+  @override
+  State<_SaveRequestDialog> createState() => _SaveRequestDialogState();
+}
+
+class _SaveRequestDialogState extends State<_SaveRequestDialog> {
+  final _nameController = TextEditingController();
+  String? _collectionId;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: const Text('Save request'),
+    content: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        TextField(
+          controller: _nameController,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'Name'),
+        ),
+        const SizedBox(height: 16),
+        DropdownButtonFormField<String?>(
+          decoration: const InputDecoration(labelText: 'Collection'),
+          items: [
+            const DropdownMenuItem<String?>(child: Text('Unfiled')),
+            ...widget.collections.map(
+              (collection) => DropdownMenuItem<String?>(
+                value: collection.id,
+                child: Text(collection.name),
+              ),
+            ),
+          ],
+          onChanged: (value) => setState(() => _collectionId = value),
+        ),
+      ],
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('Cancel'),
+      ),
+      FilledButton(
+        onPressed: () => Navigator.pop(
+          context,
+          _SaveRequestResult(
+            _nameController.text.trim(),
+            _collectionId,
+          ),
+        ),
+        child: const Text('Save'),
+      ),
+    ],
+  );
+}
+
+class _SaveRequestResult {
+  const new(this.name, this.collectionId);
+
+  final String name;
+  final String? collectionId;
+}
+
+class _WorkspaceDrawer extends StatelessWidget {
+  const new({required this.onHistory, required this.onCollections});
+
+  final VoidCallback onHistory;
+  final VoidCallback onCollections;
+
+  @override
+  Widget build(BuildContext context) => NavigationDrawer(
+    onDestinationSelected: (index) {
+      Navigator.pop(context);
+      if (index == 1) onCollections();
+      if (index == 2) onHistory();
+    },
+    children: const [
+      Padding(
+        padding: EdgeInsets.fromLTRB(28, 24, 16, 12),
+        child: Text(
+          'Lurc',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      NavigationDrawerDestination(
+        icon: Icon(Icons.send_outlined),
+        selectedIcon: Icon(Icons.send),
+        label: Text('Request'),
+      ),
+      NavigationDrawerDestination(
+        icon: Icon(Icons.folder_outlined),
+        selectedIcon: Icon(Icons.folder),
+        label: Text('Collections'),
+      ),
+      NavigationDrawerDestination(
+        icon: Icon(Icons.history),
+        label: Text('History'),
+      ),
+      Divider(),
+      NavigationDrawerDestination(
+        icon: Icon(Icons.tune_outlined),
+        label: Text('Environments'),
+      ),
+      NavigationDrawerDestination(
+        icon: Icon(Icons.settings_outlined),
+        label: Text('Settings'),
+      ),
+      NavigationDrawerDestination(
+        icon: Icon(Icons.info_outline),
+        label: Text('About'),
+      ),
+    ],
+  );
 }
