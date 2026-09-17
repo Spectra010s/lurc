@@ -18,9 +18,9 @@ class RequestHistoryRepository {
 
     try {
       final decoded = jsonDecode(raw);
-      if (decoded is! List) return const [];
+      if (decoded is! List<Object?>) return const [];
       return decoded
-          .whereType<Map>()
+          .whereType<Map<Object?, Object?>>()
           .map(
             (item) => requestRecordFromJson(
               item.map((key, value) => MapEntry(key.toString(), value)),
