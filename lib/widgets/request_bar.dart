@@ -22,7 +22,7 @@ class RequestBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
       child: Column(
         children: [
           TextField(
@@ -36,6 +36,7 @@ class RequestBar extends StatelessWidget {
               if (!loading) onSend();
             },
             decoration: const InputDecoration(
+              labelText: 'Request URL',
               hintText: 'https://example.com',
               border: OutlineInputBorder(),
               isDense: true,
@@ -49,6 +50,7 @@ class RequestBar extends StatelessWidget {
                   initialValue: method,
                   isExpanded: true,
                   decoration: const InputDecoration(
+                    labelText: 'Method',
                     border: OutlineInputBorder(),
                     isDense: true,
                   ),
@@ -70,17 +72,20 @@ class RequestBar extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 flex: 2,
-                child: loading
-                    ? OutlinedButton.icon(
-                        onPressed: onCancel,
-                        icon: const Icon(Icons.stop),
-                        label: const Text('Cancel'),
-                      )
-                    : FilledButton.icon(
-                        onPressed: onSend,
-                        icon: const Icon(Icons.send),
-                        label: const Text('Send'),
-                      ),
+                child: SizedBox(
+                  height: 48,
+                  child: loading
+                      ? OutlinedButton.icon(
+                          onPressed: onCancel,
+                          icon: const Icon(Icons.stop),
+                          label: const Text('Cancel'),
+                        )
+                      : FilledButton.icon(
+                          onPressed: onSend,
+                          icon: const Icon(Icons.send),
+                          label: const Text('Send'),
+                        ),
+                ),
               ),
             ],
           ),
