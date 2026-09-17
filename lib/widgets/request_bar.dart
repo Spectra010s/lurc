@@ -8,6 +8,7 @@ class RequestBar extends StatelessWidget {
     required this.loading,
     required this.onMethodChanged,
     required this.onSend,
+    required this.onCancel,
     super.key,
   });
 
@@ -16,6 +17,7 @@ class RequestBar extends StatelessWidget {
   final bool loading;
   final ValueChanged<HttpMethod> onMethodChanged;
   final VoidCallback onSend;
+  final VoidCallback onCancel;
 
   @override
   Widget build(BuildContext context) {
@@ -30,18 +32,13 @@ class RequestBar extends StatelessWidget {
             textInputAction: TextInputAction.go,
             autocorrect: false,
             enableSuggestions: false,
-            onSubmitted: (_) => onSend(),
-            decoration: InputDecoration(
+            onSubmitted: (_) {
+              if (!loading) onSend();
+            },
+            decoration: const InputDecoration(
               hintText: 'https://example.com',
-              border: const OutlineInputBorder(),
+              border: OutlineInputBorder(),
               isDense: true,
-              suffixIcon: controller.text.isEmpty
-                  ? null
-                  : IconButton(
-                      tooltip: 'Clear URL',
-                      onPressed: loading ? null : controller.clear,
-                      icon: const Icon(Icons.close),
-                    ),
             ),
           ),
           const SizedBox(height: 8),
@@ -73,17 +70,17 @@ class RequestBar extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 flex: 2,
-                child: FilledButton.icon(
-                  onPressed: loading ? null : onSend,
-                  icon: loading
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.send),
-                  label: Text(loading ? 'Sending' : 'Send'),
-                ),
+                child: loading
+                    ? OutlinedButton.icon(
+                        onPressed: onCancel,
+                        icon: const Icon(Icons.stop),
+                        label: const Text('Cancel'),
+                      )
+                    : FilledButton.icon(
+                        onPressed: onSend,
+                        icon: const Icon(Icons.send),
+                        label: const Text('Send'),
+                      ),
               ),
             ],
           ),
