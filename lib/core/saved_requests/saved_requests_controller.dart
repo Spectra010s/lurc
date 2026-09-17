@@ -21,7 +21,8 @@ final collectionsProvider = Provider<AsyncValue<List<Collection>>>(
       .whenData((value) => value.collections),
 );
 
-final savedRequestsInCollectionProvider =
+final ProviderFamily<AsyncValue<List<SavedRequest>>, String?>
+savedRequestsInCollectionProvider =
     Provider.family<AsyncValue<List<SavedRequest>>, String?>(
       (ref, collectionId) => ref
           .watch(savedRequestsControllerProvider)
@@ -32,7 +33,7 @@ class SavedRequestsController extends AsyncNotifier<SavedRequestsState> {
   @override
   Future<SavedRequestsState> build() async {
     final repository = await ref.watch(savedRequestsRepositoryProvider.future);
-    return repository.load();
+    return await repository.load();
   }
 
   /// Publish only persisted snapshots; callers receive write failures while the
