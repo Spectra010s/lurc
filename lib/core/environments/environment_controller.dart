@@ -32,7 +32,7 @@ class ActiveEnvironmentIdController extends Notifier<String?> {
   @override
   String? build() => null;
 
-  void select(String? id) => state = id;
+  set selectedId(String? id) => state = id;
 }
 
 class EnvironmentsController extends AsyncNotifier<List<Environment>> {
@@ -55,7 +55,7 @@ class EnvironmentsController extends AsyncNotifier<List<Environment>> {
     final next = await repository.delete(id);
     if (ref.mounted) state = AsyncData(next);
     if (ref.read(activeEnvironmentIdProvider) == id) {
-      ref.read(activeEnvironmentIdProvider.notifier).select(null);
+      ref.read(activeEnvironmentIdProvider.notifier).selectedId = null;
     }
   }
 }

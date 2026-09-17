@@ -45,9 +45,9 @@ class EnvironmentsScreen extends ConsumerWidget {
                   '${environment.variables.length == 1 ? '' : 's'}'
                   '${active ? ' • Active' : ''}',
                 ),
-                onTap: () => ref
-                    .read(activeEnvironmentIdProvider.notifier)
-                    .select(environment.id),
+                onTap: () =>
+                    ref.read(activeEnvironmentIdProvider.notifier).selectedId =
+                        environment.id,
                 trailing: PopupMenuButton<String>(
                   onSelected: (value) {
                     if (value == 'edit') {
@@ -85,7 +85,7 @@ class EnvironmentsScreen extends ConsumerWidget {
     );
     if (result == null) return;
     await ref.read(environmentsControllerProvider.notifier).save(result);
-    ref.read(activeEnvironmentIdProvider.notifier).select(result.id);
+    ref.read(activeEnvironmentIdProvider.notifier).selectedId = result.id;
   }
 }
 
