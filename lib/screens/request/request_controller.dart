@@ -4,7 +4,10 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lurc/core/http/http_client.dart';
 import 'package:lurc/core/http/request.dart';
+import 'package:lurc/core/http/request_record.dart';
+import 'package:lurc/core/http/request_snapshot.dart';
 import 'package:lurc/core/http/response.dart';
+import 'package:lurc/screens/history/history_controller.dart';
 
 class RequestState {
   const new({
@@ -58,6 +61,7 @@ class RequestController extends Notifier<RequestState> {
   Future<void> send({
     required String url,
     String? body,
+    String bodyType = 'none',
     bool validateJsonBody = false,
     Map<String, String> queryParameters = const {},
     Map<String, String> headers = const {},
@@ -94,6 +98,14 @@ class RequestController extends Notifier<RequestState> {
       }
     }
 
+    final request = HttpRequest(
+      method: state.method,
+      url: trimmedUrl,
+      queryParameters: queryParameters,
+      headers: headers,
+      body: requestBody,
+    );
+
     _cancelToken = CancelToken();
     state = state.copyWith(
       loading: true,
@@ -103,13 +115,7 @@ class RequestController extends Notifier<RequestState> {
 
     try {
       final response = await ref.read(httpClientProvider).execute(
-            HttpRequest(
-              method: state.method,
-              url: trimmedUrl,
-              queryParameters: queryParameters,
-              headers: headers,
-              body: requestBody,
-            ),
+            request,
             cancelToken: _cancelToken,
           );
       state = state.copyWith(
@@ -117,6 +123,27 @@ class RequestController extends Notifier<RequestState> {
         loading: false,
         clearError: true,
       );
+
+      final now = DateTime.now();
+      final repository =
+          await ref.read(requestHistoryRepositoryProvider.future);
+      await repository.save(
+        RequestRecord(
+          id: now.microsecondsSinceEpoch.toString(),
+          sentAt: now,
+          request: RequestSnapshot(
+            method: request.method,
+            url: request.url,
+            headers: request.headers,
+            queryParameters: request.queryParameters,
+            body: request.body,
+            bodyType: bodyType,
+          ),
+          statusCode: response.statusCode,
+          durationMs: response.duration.inMilliseconds,
+        ),
+      );
+      ref.invalidate(requestHistoryProvider);
     } on LurcHttpException catch (error) {
       state = state.copyWith(
         error: error.message,
