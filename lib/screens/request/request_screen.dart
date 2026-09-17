@@ -111,7 +111,9 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
     if (!mounted) return;
     final result = await showDialog<_SaveRequestResult>(
       context: context,
-      builder: (context) => _SaveRequestDialog(collections: library.collections),
+      builder: (context) => _SaveRequestDialog(
+        collections: library.collections,
+      ),
     );
     if (result == null || result.name.isEmpty) return;
 
@@ -125,7 +127,9 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
         collectionId: result.collectionId,
         queryParameters: keyValueEntriesToMap(_queryParameters),
         headers: keyValueEntriesToMap(_headers),
-        body: _bodyMode == RequestBodyType.none ? null : _bodyController.text,
+        body: _bodyMode == RequestBodyType.none
+            ? null
+            : _bodyController.text,
         bodyType: _bodyMode,
       ),
     );
@@ -147,12 +151,17 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
         actions: [
           IconButton(
             tooltip: 'Save request',
-            onPressed: request.loading ? null : () => _saveRequest(request.method),
+            onPressed: request.loading
+                ? null
+                : () => _saveRequest(request.method),
             icon: const Icon(Icons.bookmark_add_outlined),
           ),
         ],
       ),
-      drawer: _WorkspaceDrawer(onHistory: _openHistory, onCollections: _openCollections),
+      drawer: _WorkspaceDrawer(
+        onHistory: _openHistory,
+        onCollections: _openCollections,
+      ),
       body: Column(
         children: [
           RequestBar(
@@ -168,7 +177,13 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
               length: 3,
               child: Column(
                 children: [
-                  const TabBar(tabs: [Tab(text: 'Params'), Tab(text: 'Headers'), Tab(text: 'Body')]),
+                  const TabBar(
+                    tabs: [
+                      Tab(text: 'Params'),
+                      Tab(text: 'Headers'),
+                      Tab(text: 'Body'),
+                    ],
+                  ),
                   Expanded(
                     child: TabBarView(
                       children: [
@@ -178,7 +193,8 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
                             key: ValueKey('params-$_editorRevision'),
                             label: 'Query parameters',
                             initialEntries: _queryParameters,
-                            onChanged: (entries) => _queryParameters = entries,
+                            onChanged: (entries) =>
+                                _queryParameters = entries,
                           ),
                         ),
                         SingleChildScrollView(
@@ -195,7 +211,8 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
                           child: RequestEditor(
                             controller: _bodyController,
                             mode: _bodyMode,
-                            onModeChanged: (mode) => setState(() => _bodyMode = mode),
+                            onModeChanged: (mode) =>
+                                setState(() => _bodyMode = mode),
                           ),
                         ),
                       ],
@@ -252,7 +269,6 @@ class _SaveRequestDialogState extends State<_SaveRequestDialog> {
         ),
         const SizedBox(height: 16),
         DropdownButtonFormField<String?>(
-          initialValue: _collectionId,
           decoration: const InputDecoration(labelText: 'Collection'),
           items: [
             const DropdownMenuItem<String?>(child: Text('Unfiled')),
@@ -268,11 +284,17 @@ class _SaveRequestDialogState extends State<_SaveRequestDialog> {
       ],
     ),
     actions: [
-      TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('Cancel'),
+      ),
       FilledButton(
         onPressed: () => Navigator.pop(
           context,
-          _SaveRequestResult(_nameController.text.trim(), _collectionId),
+          _SaveRequestResult(
+            _nameController.text.trim(),
+            _collectionId,
+          ),
         ),
         child: const Text('Save'),
       ),
@@ -282,6 +304,7 @@ class _SaveRequestDialogState extends State<_SaveRequestDialog> {
 
 class _SaveRequestResult {
   const new(this.name, this.collectionId);
+
   final String name;
   final String? collectionId;
 }
@@ -303,15 +326,41 @@ class _WorkspaceDrawer extends StatelessWidget {
     children: const [
       Padding(
         padding: EdgeInsets.fromLTRB(28, 24, 16, 12),
-        child: Text('Lurc', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600)),
+        child: Text(
+          'Lurc',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
-      NavigationDrawerDestination(icon: Icon(Icons.send_outlined), selectedIcon: Icon(Icons.send), label: Text('Request')),
-      NavigationDrawerDestination(icon: Icon(Icons.folder_outlined), selectedIcon: Icon(Icons.folder), label: Text('Collections')),
-      NavigationDrawerDestination(icon: Icon(Icons.history), label: Text('History')),
+      NavigationDrawerDestination(
+        icon: Icon(Icons.send_outlined),
+        selectedIcon: Icon(Icons.send),
+        label: Text('Request'),
+      ),
+      NavigationDrawerDestination(
+        icon: Icon(Icons.folder_outlined),
+        selectedIcon: Icon(Icons.folder),
+        label: Text('Collections'),
+      ),
+      NavigationDrawerDestination(
+        icon: Icon(Icons.history),
+        label: Text('History'),
+      ),
       Divider(),
-      NavigationDrawerDestination(icon: Icon(Icons.tune_outlined), label: Text('Environments')),
-      NavigationDrawerDestination(icon: Icon(Icons.settings_outlined), label: Text('Settings')),
-      NavigationDrawerDestination(icon: Icon(Icons.info_outline), label: Text('About')),
+      NavigationDrawerDestination(
+        icon: Icon(Icons.tune_outlined),
+        label: Text('Environments'),
+      ),
+      NavigationDrawerDestination(
+        icon: Icon(Icons.settings_outlined),
+        label: Text('Settings'),
+      ),
+      NavigationDrawerDestination(
+        icon: Icon(Icons.info_outline),
+        label: Text('About'),
+      ),
     ],
   );
 }
