@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lurc/core/environments/environment_controller.dart';
 import 'package:lurc/core/http/request.dart';
 import 'package:lurc/core/http/request_body_type.dart';
 import 'package:lurc/core/http/request_record.dart';
@@ -7,6 +8,7 @@ import 'package:lurc/core/saved_requests/collection.dart';
 import 'package:lurc/core/saved_requests/saved_request.dart';
 import 'package:lurc/core/saved_requests/saved_requests_controller.dart';
 import 'package:lurc/screens/collections/collections_screen.dart';
+import 'package:lurc/screens/environments/environments_screen.dart';
 import 'package:lurc/screens/history/history_screen.dart';
 import 'package:lurc/screens/request/request_controller.dart';
 import 'package:lurc/widgets/key_value_editor.dart';
@@ -106,6 +108,12 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
     );
   }
 
+  Future<void> _openEnvironments() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(builder: (_) => const EnvironmentsScreen()),
+    );
+  }
+
   Future<void> _saveRequest(HttpMethod method) async {
     final library = await ref.read(savedRequestsControllerProvider.future);
     if (!mounted) return;
@@ -144,11 +152,38 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
   Widget build(BuildContext context) {
     final request = ref.watch(requestControllerProvider);
     final requestController = ref.read(requestControllerProvider.notifier);
+    final environments = ref.watch(environmentsControllerProvider).value ?? const [];
+    final activeEnvironmentId = ref.watch(activeEnvironmentIdProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Lurc'),
         actions: [
+          PopupMenuButton<String?>(
+            tooltip: 'Active environment',
+            icon: const Icon(Icons.tune_outlined),
+            onSelected: (value) =>
+                ref.read(activeEnvironmentIdProvider.notifier).state = value,
+            itemBuilder: (_) => [
+              const PopupMenuItem<String?>(
+                child: Text('No environment'),
+              ),
+              for (final environment in environments)
+                PopupMenuItem<String?>(
+                  value: environment.id,
+                  child: Row(
+                    children: [
+                      if (environment.id == activeEnvironmentId)
+                        const Padding(
+                          padding: EdgeInsets.only(right: 8),
+                          child: Icon(Icons.check, size: 18),
+                        ),
+                      Flexible(child: Text(environment.name)),
+                    ],
+                  ),
+                ),
+            ],
+          ),
           IconButton(
             tooltip: 'Save request',
             onPressed: request.loading
@@ -161,9 +196,16 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
       drawer: _WorkspaceDrawer(
         onHistory: _openHistory,
         onCollections: _openCollections,
+        onEnvironments: _openEnvironments,
       ),
       body: Column(
         children: [
+          if (activeEnvironmentId != null)
+            _ActiveEnvironmentBanner(
+              name: ref.watch(activeEnvironmentProvider)?.name ?? 'Environment',
+              onClear: () =>
+                  ref.read(activeEnvironmentIdProvider.notifier).state = null,
+            ),
           RequestBar(
             method: request.method,
             controller: _urlController,
@@ -235,6 +277,28 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
       ),
     );
   }
+}
+
+class _ActiveEnvironmentBanner extends StatelessWidget {
+  const new({required this.name, required this.onClear});
+
+  final String name;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Theme.of(context).colorScheme.surfaceContainerLow,
+    child: ListTile(
+      dense: true,
+      leading: const Icon(Icons.tune, size: 20),
+      title: Text('Environment: $name'),
+      trailing: IconButton(
+        tooltip: 'Clear environment',
+        onPressed: onClear,
+        icon: const Icon(Icons.close, size: 20),
+      ),
+    ),
+  );
 }
 
 class _SaveRequestDialog extends StatefulWidget {
@@ -310,10 +374,15 @@ class _SaveRequestResult {
 }
 
 class _WorkspaceDrawer extends StatelessWidget {
-  const new({required this.onHistory, required this.onCollections});
+  const new({
+    required this.onHistory,
+    required this.onCollections,
+    required this.onEnvironments,
+  });
 
   final VoidCallback onHistory;
   final VoidCallback onCollections;
+  final VoidCallback onEnvironments;
 
   @override
   Widget build(BuildContext context) => NavigationDrawer(
@@ -321,6 +390,7 @@ class _WorkspaceDrawer extends StatelessWidget {
       Navigator.pop(context);
       if (index == 1) onCollections();
       if (index == 2) onHistory();
+      if (index == 3) onEnvironments();
     },
     children: const [
       Padding(
@@ -347,18 +417,9 @@ class _WorkspaceDrawer extends StatelessWidget {
         icon: Icon(Icons.history),
         label: Text('History'),
       ),
-      Divider(),
       NavigationDrawerDestination(
         icon: Icon(Icons.tune_outlined),
         label: Text('Environments'),
-      ),
-      NavigationDrawerDestination(
-        icon: Icon(Icons.settings_outlined),
-        label: Text('Settings'),
-      ),
-      NavigationDrawerDestination(
-        icon: Icon(Icons.info_outline),
-        label: Text('About'),
       ),
     ],
   );
