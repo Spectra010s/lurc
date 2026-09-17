@@ -5,7 +5,7 @@ class Environment {
     this.variables = const {},
   });
 
-  factory Environment.fromJson(Map<String, Object?> json) {
+  factory .fromJson(Map<String, Object?> json) {
     final rawVariables = json['variables'];
     if (json['id'] case final String id when id.isNotEmpty) {
       if (json['name'] case final String name when name.isNotEmpty) {
