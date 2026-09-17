@@ -144,11 +144,19 @@ void main() {
   test('load errors are exposed and can be retried by invalidation', () async {
     final preferences = await SharedPreferences.getInstance();
     await preferences.setString(LocalSavedRequestsRepository.storageKey, 'bad');
-    await expectLater(
-      container.read(savedRequestsControllerProvider.future),
-      throwsFormatException,
+
+    final subscription = container.listen(
+      savedRequestsControllerProvider,
+      (_, _) {},
+      fireImmediately: true,
     );
-    expect(container.read(savedRequestsControllerProvider).hasError, isTrue);
+    addTearDown(subscription.close);
+    await container.pump();
+
+    final failedState = container.read(savedRequestsControllerProvider);
+    expect(failedState.hasError, isTrue);
+    expect(failedState.error, isA<FormatException>());
+
     await preferences.remove(LocalSavedRequestsRepository.storageKey);
     container.invalidate(savedRequestsControllerProvider);
     expect(
