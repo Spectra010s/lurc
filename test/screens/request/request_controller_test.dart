@@ -5,6 +5,7 @@ import 'package:lurc/core/http/http_client.dart';
 import 'package:lurc/core/http/request.dart';
 import 'package:lurc/core/http/response.dart';
 import 'package:lurc/screens/request/request_controller.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FakeHttpClient extends LurcHttpClient {
   HttpRequest? lastRequest;
@@ -25,6 +26,12 @@ class FakeHttpClient extends LurcHttpClient {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
   test('starts with GET and no request result', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
