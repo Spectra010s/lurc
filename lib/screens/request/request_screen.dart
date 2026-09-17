@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lurc/core/http/request_body_type.dart';
 import 'package:lurc/core/http/request_record.dart';
 import 'package:lurc/screens/history/history_screen.dart';
 import 'package:lurc/screens/request/request_controller.dart';
@@ -20,7 +21,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
   final _bodyController = TextEditingController();
   List<KeyValueEntry> _queryParameters = const [];
   List<KeyValueEntry> _headers = const [];
-  RequestBodyMode _bodyMode = RequestBodyMode.none;
+  RequestBodyType _bodyMode = RequestBodyType.none;
   var _editorRevision = 0;
 
   @override
@@ -32,16 +33,16 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
 
   Future<void> _sendRequest() async {
     final headers = keyValueEntriesToMap(_headers);
-    if (_bodyMode == RequestBodyMode.json &&
+    if (_bodyMode == RequestBodyType.json &&
         !headers.keys.any((key) => key.toLowerCase() == 'content-type')) {
       headers['Content-Type'] = 'application/json';
     }
 
     await ref.read(requestControllerProvider.notifier).send(
       url: _urlController.text,
-      body: _bodyMode == RequestBodyMode.none ? null : _bodyController.text,
-      bodyType: _bodyMode.name,
-      validateJsonBody: _bodyMode == RequestBodyMode.json,
+      body: _bodyMode == RequestBodyType.none ? null : _bodyController.text,
+      bodyType: _bodyMode,
+      validateJsonBody: _bodyMode == RequestBodyType.json,
       queryParameters: keyValueEntriesToMap(_queryParameters),
       headers: headers,
     );
@@ -54,11 +55,6 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
     if (record == null || !mounted) return;
 
     final snapshot = record.request;
-    final bodyMode = RequestBodyMode.values.firstWhere(
-      (mode) => mode.name == snapshot.bodyType,
-      orElse: () => RequestBodyMode.none,
-    );
-
     ref.read(requestControllerProvider.notifier).setMethod(snapshot.method);
     setState(() {
       _urlController.text = snapshot.url;
@@ -69,7 +65,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
       _headers = snapshot.headers.entries
           .map((entry) => KeyValueEntry(key: entry.key, value: entry.value))
           .toList(growable: false);
-      _bodyMode = bodyMode;
+      _bodyMode = snapshot.bodyType;
       _editorRevision++;
     });
   }
