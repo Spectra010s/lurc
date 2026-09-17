@@ -10,7 +10,7 @@ abstract interface class EnvironmentRepository {
 }
 
 class LocalEnvironmentRepository implements EnvironmentRepository {
-  LocalEnvironmentRepository.new(this._preferences);
+  new(this._preferences);
 
   static const _storageKey = 'environments_v1';
   final SharedPreferences _preferences;
