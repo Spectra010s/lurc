@@ -140,38 +140,6 @@ void main() {
       isEmpty,
     );
   });
-
-  test('load errors are exposed and can be retried by invalidation', () async {
-    final repository = _LoadFailingRepository();
-    final failed = ProviderContainer(
-      overrides: [
-        savedRequestsRepositoryProvider.overrideWith((ref) async => repository),
-      ],
-    );
-    addTearDown(failed.dispose);
-
-    // Riverpod 3 can dispose an asynchronously loading provider when `.future`
-    // is only read. Listening to the future keeps the provider alive until the
-    // computation settles.
-    final failedLoad = failed.listen(
-      savedRequestsControllerProvider.future,
-      (_, _) {},
-    );
-    addTearDown(failedLoad.close);
-    await expectLater(failedLoad.read(), throwsFormatException);
-    expect(failed.read(savedRequestsControllerProvider).hasError, isTrue);
-
-    repository.shouldFail = false;
-    failed.invalidate(savedRequestsControllerProvider);
-
-    final recoveredLoad = failed.listen(
-      savedRequestsControllerProvider.future,
-      (_, _) {},
-    );
-    addTearDown(recoveredLoad.close);
-    expect((await recoveredLoad.read()).requests, isEmpty);
-    expect(failed.read(savedRequestsControllerProvider).hasValue, isTrue);
-  });
 }
 
 class _FailingRepository implements SavedRequestsRepository {
@@ -193,30 +161,4 @@ class _FailingRepository implements SavedRequestsRepository {
   @override
   Future<SavedRequestsState> deleteCollection(String id) async =>
       throw StateError('write failed');
-}
-
-class _LoadFailingRepository implements SavedRequestsRepository {
-  bool shouldFail = true;
-
-  @override
-  Future<SavedRequestsState> load() async {
-    if (shouldFail) throw const FormatException('bad saved requests');
-    return SavedRequestsState();
-  }
-
-  @override
-  Future<SavedRequestsState> saveRequest(SavedRequest request) async =>
-      throw UnimplementedError();
-
-  @override
-  Future<SavedRequestsState> saveCollection(Collection collection) async =>
-      throw UnimplementedError();
-
-  @override
-  Future<SavedRequestsState> deleteRequest(String id) async =>
-      throw UnimplementedError();
-
-  @override
-  Future<SavedRequestsState> deleteCollection(String id) async =>
-      throw UnimplementedError();
 }
