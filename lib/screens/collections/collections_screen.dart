@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lurc/core/saved_requests/collection.dart';
@@ -20,7 +22,9 @@ class CollectionsScreen extends ConsumerWidget {
       ),
       body: library.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('Could not load collections.\n$error')),
+        error: (error, _) => Center(
+          child: Text('Could not load collections.\n$error'),
+        ),
         data: (state) {
           if (state.collections.isEmpty && state.requests.isEmpty) {
             return const _EmptyLibrary();
@@ -34,7 +38,9 @@ class CollectionsScreen extends ConsumerWidget {
                   requests: state.requestsInCollection(collection.id),
                 ),
               if (state.requestsInCollection(null).isNotEmpty)
-                _UnfiledSection(requests: state.requestsInCollection(null)),
+                _UnfiledSection(
+                  requests: state.requestsInCollection(null),
+                ),
             ],
           );
         },
@@ -55,9 +61,15 @@ class CollectionsScreen extends ConsumerWidget {
           onSubmitted: (value) => Navigator.pop(context, value.trim()),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
-            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            onPressed: () => Navigator.pop(
+              context,
+              controller.text.trim(),
+            ),
             child: const Text('Create'),
           ),
         ],
@@ -83,18 +95,31 @@ class _CollectionSection extends ConsumerWidget {
     initiallyExpanded: true,
     leading: const Icon(Icons.folder_outlined),
     title: Text(collection.name),
-    subtitle: Text('${requests.length} request${requests.length == 1 ? '' : 's'}'),
+    subtitle: Text(
+      '${requests.length} request${requests.length == 1 ? '' : 's'}',
+    ),
     trailing: PopupMenuButton<String>(
       onSelected: (value) {
         if (value == 'delete') {
-          ref.read(savedRequestsControllerProvider.notifier).deleteCollection(collection.id);
+          unawaited(
+            ref
+                .read(savedRequestsControllerProvider.notifier)
+                .deleteCollection(collection.id),
+          );
         }
       },
-      itemBuilder: (_) => const [PopupMenuItem(value: 'delete', child: Text('Delete collection'))],
+      itemBuilder: (_) => const [
+        PopupMenuItem(
+          value: 'delete',
+          child: Text('Delete collection'),
+        ),
+      ],
     ),
     children: requests.isEmpty
         ? const [ListTile(title: Text('No saved requests'))]
-        : requests.map((request) => _SavedRequestTile(request: request)).toList(),
+        : requests
+            .map((request) => _SavedRequestTile(request: request))
+            .toList(),
   );
 }
 
@@ -108,7 +133,9 @@ class _UnfiledSection extends StatelessWidget {
     initiallyExpanded: true,
     leading: const Icon(Icons.inventory_2_outlined),
     title: const Text('Unfiled'),
-    children: requests.map((request) => _SavedRequestTile(request: request)).toList(),
+    children: requests
+        .map((request) => _SavedRequestTile(request: request))
+        .toList(),
   );
 }
 
@@ -128,7 +155,11 @@ class _SavedRequestTile extends ConsumerWidget {
       ),
     ),
     title: Text(request.name),
-    subtitle: Text(request.url, maxLines: 1, overflow: TextOverflow.ellipsis),
+    subtitle: Text(
+      request.url,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    ),
     trailing: IconButton(
       tooltip: 'Delete saved request',
       icon: const Icon(Icons.delete_outline),
@@ -153,7 +184,10 @@ class _EmptyLibrary extends StatelessWidget {
           SizedBox(height: 12),
           Text('No collections yet'),
           SizedBox(height: 6),
-          Text('Create a collection, then save requests from the request workspace.'),
+          Text(
+            'Create a collection, then save requests from the request '
+            'workspace.',
+          ),
         ],
       ),
     ),
