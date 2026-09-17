@@ -37,6 +37,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
     await ref.read(requestControllerProvider.notifier).send(
       url: _urlController.text,
       body: _bodyMode == RequestBodyMode.none ? null : _bodyController.text,
+      bodyType: _bodyMode.name,
       validateJsonBody: _bodyMode == RequestBodyMode.json,
       queryParameters: keyValueEntriesToMap(_queryParameters),
       headers: headers,
