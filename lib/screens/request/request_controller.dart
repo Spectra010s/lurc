@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lurc/core/http/http_client.dart';
 import 'package:lurc/core/http/request.dart';
+import 'package:lurc/core/http/request_body_type.dart';
 import 'package:lurc/core/http/request_record.dart';
 import 'package:lurc/core/http/request_snapshot.dart';
 import 'package:lurc/core/http/response.dart';
@@ -61,7 +62,7 @@ class RequestController extends Notifier<RequestState> {
   Future<void> send({
     required String url,
     String? body,
-    String bodyType = 'none',
+    RequestBodyType bodyType = RequestBodyType.none,
     bool validateJsonBody = false,
     Map<String, String> queryParameters = const {},
     Map<String, String> headers = const {},
@@ -144,7 +145,7 @@ class RequestController extends Notifier<RequestState> {
   Future<void> _recordRequest(
     HttpRequest request,
     HttpResponse response,
-    String bodyType,
+    RequestBodyType bodyType,
   ) async {
     try {
       final now = DateTime.now();
