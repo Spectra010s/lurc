@@ -23,9 +23,9 @@ class RequestWorkspace extends StatefulWidget {
 
 class _RequestWorkspaceState extends State<RequestWorkspace> {
   bool _showResponse = false;
-  final _barKey = GlobalKey();
-  final _editorKey = GlobalKey();
-  final _responseKey = GlobalKey();
+  final GlobalKey<State<StatefulWidget>> _barKey = GlobalKey();
+  final GlobalKey<State<StatefulWidget>> _editorKey = GlobalKey();
+  final GlobalKey<State<StatefulWidget>> _responseKey = GlobalKey();
 
   @override
   void didUpdateWidget(covariant RequestWorkspace oldWidget) {
