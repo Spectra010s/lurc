@@ -47,11 +47,15 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
           ),
         ),
         data: (records) {
-          if (records.isEmpty) return const Center(child: Text('No requests yet.'));
+          if (records.isEmpty) {
+            return const Center(child: Text('No requests yet.'));
+          }
           final query = _searchController.text.trim().toLowerCase();
           final filtered = records.where((record) {
-            final matchesMethod = _method == null || record.request.method == _method;
-            final matchesQuery = query.isEmpty || record.request.url.toLowerCase().contains(query);
+            final matchesMethod =
+                _method == null || record.request.method == _method;
+            final matchesQuery = query.isEmpty ||
+                record.request.url.toLowerCase().contains(query);
             return matchesMethod && matchesQuery;
           }).toList(growable: false);
 
@@ -82,7 +86,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                 height: 52,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   children: [
                     ChoiceChip(
                       label: const Text('All'),
@@ -107,7 +114,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                     : ListView.separated(
                         itemCount: filtered.length,
                         separatorBuilder: (_, _) => const Divider(height: 1),
-                        itemBuilder: (context, index) => _HistoryTile(record: filtered[index]),
+                        itemBuilder: (context, index) =>
+                            _HistoryTile(record: filtered[index]),
                       ),
               ),
             ],
@@ -122,14 +130,24 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Clear history?'),
-        content: const Text('This removes all locally stored request history.'),
+        content: const Text(
+          'This removes all locally stored request history.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Clear')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Clear'),
+          ),
         ],
       ),
     );
-    if (confirmed ?? false) await ref.read(requestHistoryProvider.notifier).clear();
+    if (confirmed ?? false) {
+      await ref.read(requestHistoryProvider.notifier).clear();
+    }
   }
 }
 
@@ -141,18 +159,33 @@ class _HistoryTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final request = record.request;
     final status = record.statusCode == null ? '' : '${record.statusCode}';
-    final duration = record.durationMs == null ? '' : '${record.durationMs} ms';
+    final duration =
+        record.durationMs == null ? '' : '${record.durationMs} ms';
+    final metadata = [
+      status,
+      duration,
+      _formatTime(record.sentAt),
+    ].where((value) => value.isNotEmpty).join(' • ');
+
     return ListTile(
       onTap: () => Navigator.pop(context, record),
-      title: Text(request.url, maxLines: 1, overflow: TextOverflow.ellipsis),
-      subtitle: Text([status, duration, _formatTime(record.sentAt)].where((value) => value.isNotEmpty).join(' • ')),
+      title: Text(
+        request.url,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      subtitle: Text(metadata),
       leading: SizedBox(
         width: 54,
-        child: Text(request.method.name.toUpperCase(), style: Theme.of(context).textTheme.labelLarge),
+        child: Text(
+          request.method.name.toUpperCase(),
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
       ),
       trailing: IconButton(
         tooltip: 'Delete request',
-        onPressed: () => ref.read(requestHistoryProvider.notifier).delete(record.id),
+        onPressed: () =>
+            ref.read(requestHistoryProvider.notifier).delete(record.id),
         icon: const Icon(Icons.delete_outline),
       ),
     );
