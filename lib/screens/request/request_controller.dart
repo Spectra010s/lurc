@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lurc/core/environments/environment_controller.dart';
+import 'package:lurc/core/environments/variable_resolver.dart';
 import 'package:lurc/core/http/http_client.dart';
 import 'package:lurc/core/http/request.dart';
 import 'package:lurc/core/http/request_body_type.dart';
@@ -67,10 +69,14 @@ class RequestController extends Notifier<RequestState> {
     Map<String, String> queryParameters = const {},
     Map<String, String> headers = const {},
   }) async {
-    final trimmedUrl = url.trim();
-    final uri = Uri.tryParse(trimmedUrl);
+    final variables = ref.read(activeEnvironmentProvider)?.variables ?? const {};
+    final resolvedUrl = resolveVariables(url.trim(), variables);
+    final resolvedBody = body == null ? null : resolveVariables(body, variables);
+    final resolvedQuery = resolveVariableMap(queryParameters, variables);
+    final resolvedHeaders = resolveVariableMap(headers, variables);
+    final uri = Uri.tryParse(resolvedUrl);
 
-    if (trimmedUrl.isEmpty) {
+    if (resolvedUrl.isEmpty) {
       state = state.copyWith(error: 'Enter a URL', clearResponse: true);
       return;
     }
@@ -86,7 +92,8 @@ class RequestController extends Notifier<RequestState> {
       return;
     }
 
-    final requestBody = body == null || body.isEmpty ? null : body;
+    final requestBody =
+        resolvedBody == null || resolvedBody.isEmpty ? null : resolvedBody;
     if (validateJsonBody && requestBody != null) {
       try {
         jsonDecode(requestBody);
@@ -101,9 +108,9 @@ class RequestController extends Notifier<RequestState> {
 
     final request = HttpRequest(
       method: state.method,
-      url: trimmedUrl,
-      queryParameters: queryParameters,
-      headers: headers,
+      url: resolvedUrl,
+      queryParameters: resolvedQuery,
+      headers: resolvedHeaders,
       body: requestBody,
     );
 
