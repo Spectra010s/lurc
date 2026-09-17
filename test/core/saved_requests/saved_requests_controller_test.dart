@@ -142,10 +142,14 @@ void main() {
   });
 
   test('load errors are exposed and can be retried by invalidation', () async {
-    final preferences = await SharedPreferences.getInstance();
-    await preferences.setString(LocalSavedRequestsRepository.storageKey, 'bad');
-
-    final subscription = container.listen(
+    final repository = _LoadFailingRepository();
+    final failed = ProviderContainer(
+      overrides: [
+        savedRequestsRepositoryProvider.overrideWith((ref) async => repository),
+      ],
+    );
+    addTearDown(failed.dispose);
+    final subscription = failed.listen(
       savedRequestsControllerProvider,
       (_, _) {},
       fireImmediately: true,
@@ -153,17 +157,15 @@ void main() {
     addTearDown(subscription.close);
 
     await expectLater(
-      container.read(savedRequestsControllerProvider.future),
+      failed.read(savedRequestsControllerProvider.future),
       throwsFormatException,
     );
-    final failedState = container.read(savedRequestsControllerProvider);
-    expect(failedState.hasError, isTrue);
-    expect(failedState.error, isA<FormatException>());
+    expect(failed.read(savedRequestsControllerProvider).hasError, isTrue);
 
-    await preferences.remove(LocalSavedRequestsRepository.storageKey);
-    container.invalidate(savedRequestsControllerProvider);
+    repository.shouldFail = false;
+    failed.invalidate(savedRequestsControllerProvider);
     expect(
-      (await container.read(savedRequestsControllerProvider.future)).requests,
+      (await failed.read(savedRequestsControllerProvider.future)).requests,
       isEmpty,
     );
   });
@@ -188,4 +190,30 @@ class _FailingRepository implements SavedRequestsRepository {
   @override
   Future<SavedRequestsState> deleteCollection(String id) async =>
       throw StateError('write failed');
+}
+
+class _LoadFailingRepository implements SavedRequestsRepository {
+  bool shouldFail = true;
+
+  @override
+  Future<SavedRequestsState> load() async {
+    if (shouldFail) throw const FormatException('bad saved requests');
+    return SavedRequestsState();
+  }
+
+  @override
+  Future<SavedRequestsState> saveRequest(SavedRequest request) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<SavedRequestsState> saveCollection(Collection collection) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<SavedRequestsState> deleteRequest(String id) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<SavedRequestsState> deleteCollection(String id) async =>
+      throw UnimplementedError();
 }
