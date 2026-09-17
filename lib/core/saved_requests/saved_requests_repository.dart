@@ -17,7 +17,7 @@ abstract interface class SavedRequestsRepository {
 /// Mutations serialize the complete snapshot under a separate preferences key.
 /// Invalid data is never silently reset.
 class LocalSavedRequestsRepository implements SavedRequestsRepository {
-  LocalSavedRequestsRepository(this.preferences);
+  new(this.preferences);
 
   static const storageKey = 'saved_requests_collections_v1';
   final SharedPreferences preferences;
@@ -28,7 +28,7 @@ class LocalSavedRequestsRepository implements SavedRequestsRepository {
   ) {
     final result = _pending.then((_) => operation());
     // A failed operation must not prevent subsequent reads or writes.
-    _pending = result.then<void>((_) {}, onError: (Object _, StackTrace __) {});
+    _pending = result.then<void>((_) {}, onError: (Object _, StackTrace _) {});
     return result;
   }
 

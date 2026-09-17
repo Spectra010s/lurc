@@ -96,7 +96,7 @@ void main() {
     expect(restored.toJson(), state.toJson());
     expect(restored.requestsInCollection('collection').single.id, 'request');
     expect(restored.requestsInCollection(null), isEmpty);
-    expect(() => restored.requests.clear(), throwsUnsupportedError);
+    expect(restored.requests.clear, throwsUnsupportedError);
   });
 
   test('snapshot rejects unknown versions and malformed records', () {
@@ -114,7 +114,7 @@ void main() {
       expect(
         () => SavedRequestsState.fromJson({
           'version': 1,
-          'collections': [],
+          'collections': <Object?>[],
           'requests': invalid,
         }),
         throwsFormatException,

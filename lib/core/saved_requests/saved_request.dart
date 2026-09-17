@@ -3,7 +3,7 @@ import 'package:lurc/core/http/request_body_type.dart';
 import 'package:lurc/core/http/request_snapshot.dart';
 
 class SavedRequest {
-  SavedRequest({
+  new({
     required this.id,
     required this.name,
     required this.method,
@@ -16,18 +16,42 @@ class SavedRequest {
   }) : queryParameters = Map.unmodifiable(queryParameters),
        headers = Map.unmodifiable(headers);
 
-  factory SavedRequest.fromJson(Map<String, dynamic> json) {
-    return SavedRequest(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      method: HttpMethod.values.byName(json['method'] as String),
-      url: json['url'] as String,
-      collectionId: json['collectionId'] as String?,
-      queryParameters: Map<String, String>.from(json['queryParameters'] as Map),
-      headers: Map<String, String>.from(json['headers'] as Map),
-      body: json['body'] as String?,
-      bodyType: RequestBodyType.values.byName(json['bodyType'] as String),
-    );
+  factory fromJson(Map<String, dynamic> json) {
+    if (json case {
+      'id': final String id,
+      'name': final String name,
+      'method': final String methodName,
+      'url': final String url,
+      'bodyType': final String bodyTypeName,
+    }) {
+      final collectionId = json['collectionId'];
+      final body = json['body'];
+      if ((collectionId != null && collectionId is! String) ||
+          (body != null && body is! String)) {
+        throw const FormatException('Invalid saved request text');
+      }
+      final methods = HttpMethod.values.where(
+        (value) => value.name == methodName,
+      );
+      final bodyTypes = RequestBodyType.values.where(
+        (value) => value.name == bodyTypeName,
+      );
+      if (methods.isEmpty || bodyTypes.isEmpty) {
+        throw const FormatException('Unknown request method or body type');
+      }
+      return SavedRequest(
+        id: id,
+        name: name,
+        method: methods.single,
+        url: url,
+        collectionId: collectionId as String?,
+        queryParameters: _stringMap(json['queryParameters']),
+        headers: _stringMap(json['headers']),
+        body: body as String?,
+        bodyType: bodyTypes.single,
+      );
+    }
+    throw const FormatException('Invalid saved request data');
   }
 
   final String id;
@@ -85,4 +109,17 @@ class SavedRequest {
     'body': body,
     'bodyType': bodyType.name,
   };
+}
+
+Map<String, String> _stringMap(Object? value) {
+  if (value is! Map<String, dynamic>) {
+    throw const FormatException('Invalid request metadata');
+  }
+  final result = <String, String>{};
+  for (final entry in value.entries) {
+    final text = entry.value;
+    if (text is! String) throw const FormatException('Invalid metadata value');
+    result[entry.key] = text;
+  }
+  return result;
 }

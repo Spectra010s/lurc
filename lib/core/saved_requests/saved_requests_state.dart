@@ -3,7 +3,7 @@ import 'package:lurc/core/saved_requests/saved_request.dart';
 
 /// A consistent snapshot of the local library.
 class SavedRequestsState {
-  SavedRequestsState({
+  new({
     List<Collection> collections = const [],
     List<SavedRequest> requests = const [],
   }) : collections = List.unmodifiable(collections),
@@ -28,26 +28,23 @@ class SavedRequestsState {
     }
   }
 
-  factory SavedRequestsState.fromJson(Map<String, dynamic> json) {
+  factory fromJson(Map<String, dynamic> json) {
     if (json['version'] != 1) {
       throw const FormatException('Unsupported saved requests version');
     }
-    try {
-      return SavedRequestsState(
-        collections: (json['collections'] as List<dynamic>)
-            .map((value) => Collection.fromJson(value as Map<String, dynamic>))
-            .toList(),
-        requests: (json['requests'] as List<dynamic>)
-            .map(
-              (value) => SavedRequest.fromJson(value as Map<String, dynamic>),
-            )
-            .toList(),
-      );
-    } on TypeError {
+    final collections = json['collections'];
+    final requests = json['requests'];
+    if (collections is! List<dynamic> || requests is! List<dynamic>) {
       throw const FormatException('Invalid saved requests data');
-    } on ArgumentError {
-      throw const FormatException('Invalid saved request enum value');
     }
+    return SavedRequestsState(
+      collections: collections
+          .map((value) => Collection.fromJson(_object(value)))
+          .toList(),
+      requests: requests
+          .map((value) => SavedRequest.fromJson(_object(value)))
+          .toList(),
+    );
   }
 
   final List<Collection> collections;
@@ -64,4 +61,11 @@ class SavedRequestsState {
     'collections': collections.map((value) => value.toJson()).toList(),
     'requests': requests.map((value) => value.toJson()).toList(),
   };
+}
+
+Map<String, dynamic> _object(Object? value) {
+  if (value is! Map<String, dynamic>) {
+    throw const FormatException('Invalid saved library record');
+  }
+  return value;
 }
