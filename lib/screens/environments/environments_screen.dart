@@ -36,11 +36,8 @@ class EnvironmentsScreen extends ConsumerWidget {
               final environment = items[index];
               final active = environment.id == activeId;
               return ListTile(
-                leading: Radio<String>(
-                  value: environment.id,
-                  groupValue: activeId,
-                  onChanged: (value) =>
-                      ref.read(activeEnvironmentIdProvider.notifier).state = value,
+                leading: Icon(
+                  active ? Icons.radio_button_checked : Icons.radio_button_off,
                 ),
                 title: Text(environment.name),
                 subtitle: Text(
@@ -48,9 +45,9 @@ class EnvironmentsScreen extends ConsumerWidget {
                   '${environment.variables.length == 1 ? '' : 's'}'
                   '${active ? ' • Active' : ''}',
                 ),
-                onTap: () =>
-                    ref.read(activeEnvironmentIdProvider.notifier).state =
-                        environment.id,
+                onTap: () => ref
+                    .read(activeEnvironmentIdProvider.notifier)
+                    .select(environment.id),
                 trailing: PopupMenuButton<String>(
                   onSelected: (value) {
                     if (value == 'edit') {
@@ -88,7 +85,7 @@ class EnvironmentsScreen extends ConsumerWidget {
     );
     if (result == null) return;
     await ref.read(environmentsControllerProvider.notifier).save(result);
-    ref.read(activeEnvironmentIdProvider.notifier).state = result.id;
+    ref.read(activeEnvironmentIdProvider.notifier).select(result.id);
   }
 }
 
@@ -140,7 +137,9 @@ class _EnvironmentEditorState extends State<_EnvironmentEditor> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: Text(widget.environment == null ? 'New environment' : 'Edit environment'),
+      title: Text(
+        widget.environment == null ? 'New environment' : 'Edit environment',
+      ),
       actions: [
         TextButton(onPressed: _save, child: const Text('Save')),
       ],
