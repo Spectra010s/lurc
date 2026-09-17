@@ -1,4 +1,5 @@
 import 'package:lurc/core/http/request.dart';
+import 'package:lurc/core/http/request_body_type.dart';
 
 class RequestSnapshot {
   const new({
@@ -7,7 +8,7 @@ class RequestSnapshot {
     this.headers = const {},
     this.queryParameters = const {},
     this.body,
-    this.bodyType = 'none',
+    this.bodyType = RequestBodyType.none,
   });
 
   final HttpMethod method;
@@ -15,7 +16,7 @@ class RequestSnapshot {
   final Map<String, String> headers;
   final Map<String, String> queryParameters;
   final String? body;
-  final String bodyType;
+  final RequestBodyType bodyType;
 
   HttpRequest toHttpRequest() => HttpRequest(
         method: method,
