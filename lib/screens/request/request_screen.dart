@@ -58,6 +58,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
             loading: request.loading,
             onMethodChanged: requestController.setMethod,
             onSend: _sendRequest,
+            onCancel: requestController.cancel,
           ),
           Expanded(
             child: DefaultTabController(
