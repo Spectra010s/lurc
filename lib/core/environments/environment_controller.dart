@@ -1,11 +1,20 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lurc/core/environments/environment.dart';
 import 'package:lurc/core/environments/environment_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+const _activeEnvironmentKey = 'active_environment_id_v1';
+
+final sharedPreferencesProvider = FutureProvider<SharedPreferences>(
+  (ref) => SharedPreferences.getInstance(),
+);
+
 final environmentRepositoryProvider = FutureProvider<EnvironmentRepository>(
-  (ref) async =>
-      LocalEnvironmentRepository(await SharedPreferences.getInstance()),
+  (ref) async => LocalEnvironmentRepository(
+    await ref.watch(sharedPreferencesProvider.future),
+  ),
 );
 
 final environmentsControllerProvider =
@@ -30,18 +39,45 @@ final activeEnvironmentProvider = Provider<Environment?>((ref) {
 
 class ActiveEnvironmentIdController extends Notifier<String?> {
   @override
-  String? build() => null;
+  String? build() {
+    unawaited(_restore());
+    return null;
+  }
 
   String? get selectedId => state;
 
-  set selectedId(String? id) => state = id;
+  set selectedId(String? id) {
+    state = id;
+    unawaited(_persist(id));
+  }
+
+  Future<void> _restore() async {
+    final preferences = await ref.read(sharedPreferencesProvider.future);
+    final savedId = preferences.getString(_activeEnvironmentKey);
+    final environments = await ref.read(environmentsControllerProvider.future);
+    if (!ref.mounted || savedId == null) return;
+    if (environments.any((environment) => environment.id == savedId)) {
+      state = savedId;
+    } else {
+      await preferences.remove(_activeEnvironmentKey);
+    }
+  }
+
+  Future<void> _persist(String? id) async {
+    final preferences = await ref.read(sharedPreferencesProvider.future);
+    if (id == null) {
+      await preferences.remove(_activeEnvironmentKey);
+    } else {
+      await preferences.setString(_activeEnvironmentKey, id);
+    }
+  }
 }
 
 class EnvironmentsController extends AsyncNotifier<List<Environment>> {
   @override
   Future<List<Environment>> build() async {
     final repository = await ref.watch(environmentRepositoryProvider.future);
-    return await repository.load();
+    return repository.load();
   }
 
   Future<void> save(Environment environment) async {
