@@ -77,7 +77,7 @@ class EnvironmentsController extends AsyncNotifier<List<Environment>> {
   @override
   Future<List<Environment>> build() async {
     final repository = await ref.watch(environmentRepositoryProvider.future);
-    return repository.load();
+    return await repository.load();
   }
 
   Future<void> save(Environment environment) async {
