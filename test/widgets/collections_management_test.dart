@@ -5,6 +5,8 @@ import 'package:lurc/core/http/request.dart';
 import 'package:lurc/core/http/request_body_type.dart';
 import 'package:lurc/core/saved_requests/collection.dart';
 import 'package:lurc/core/saved_requests/saved_request.dart';
+import 'package:lurc/core/saved_requests/saved_requests_controller.dart';
+import 'package:lurc/core/saved_requests/saved_requests_state.dart';
 import 'package:lurc/core/saved_requests/saved_requests_repository.dart';
 import 'package:lurc/screens/collections/collections_screen.dart';
 import 'package:lurc/screens/collections/saved_request_editor_screen.dart';
@@ -37,9 +39,19 @@ void main() {
     await repository.saveRequest(original);
   });
 
-  Future<void> open(WidgetTester tester) async {
+  Future<void> open(
+    WidgetTester tester, {
+    LocalSavedRequestsRepository? storage,
+  }) async {
     await tester.pumpWidget(
-      const ProviderScope(child: MaterialApp(home: CollectionsScreen())),
+      ProviderScope(
+        overrides: [
+          savedRequestsRepositoryProvider.overrideWith(
+            (ref) => storage ?? repository,
+          ),
+        ],
+        child: const MaterialApp(home: CollectionsScreen()),
+      ),
     );
     await tester.pumpAndSettle();
   }
@@ -150,6 +162,27 @@ void main() {
     );
   });
 
+  testWidgets('failed edits retain the draft and can be retried', (
+    tester,
+  ) async {
+    final failing = _RetryRepository(await SharedPreferences.getInstance());
+    await open(tester, storage: failing);
+    await action(tester, 'Create user', 'Edit request');
+    await tester.enterText(find.byType(TextFormField).first, 'Retry draft');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(find.text('Could not save request. Please retry.'), findsOneWidget);
+    expect(find.text('Retry draft'), findsOneWidget);
+    expect(
+      (await repository.load()).requests.single.toJson(),
+      original.toJson(),
+    );
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(find.byType(SavedRequestEditorScreen), findsNothing);
+    expect((await repository.load()).requests.single.name, 'Retry draft');
+  });
+
   testWidgets('opening a saved request returns the full request', (
     tester,
   ) async {
@@ -180,4 +213,19 @@ void main() {
     await tester.pumpAndSettle();
     expect(result?.toJson(), original.toJson());
   });
+}
+
+class _RetryRepository extends LocalSavedRequestsRepository {
+  new(super.preferences);
+
+  var _failNext = true;
+
+  @override
+  Future<SavedRequestsState> saveRequest(SavedRequest request) async {
+    if (_failNext) {
+      _failNext = false;
+      throw StateError('Storage unavailable');
+    }
+    return super.saveRequest(request);
+  }
 }
