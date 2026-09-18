@@ -154,7 +154,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
   Widget build(BuildContext context) {
     final request = ref.watch(requestControllerProvider);
     final requestController = ref.read(requestControllerProvider.notifier);
-    final environments = ref.watch(environmentsControllerProvider).value ?? const [];
+    final environments =\n        ref.watch(environmentsControllerProvider).value ?? const [];
     final activeEnvironment = ref.watch(activeEnvironmentProvider);
     final environmentController =
         ref.read(activeEnvironmentIdProvider.notifier);
@@ -274,7 +274,7 @@ class _EnvironmentMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => PopupMenuButton<String>(
-    tooltip: active == null ? 'Select environment' : 'Environment: ${active!.name}',
+    tooltip: active == null\n        ? 'Select environment'\n        : 'Environment: ${active!.name}',
     icon: Icon(
       active == null ? Icons.tune_outlined : Icons.tune,
     ),
