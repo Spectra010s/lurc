@@ -12,6 +12,7 @@ import 'package:lurc/screens/request/request_controller.dart';
 import 'package:lurc/widgets/key_value_editor.dart';
 import 'package:lurc/widgets/request_bar.dart';
 import 'package:lurc/widgets/request_editor.dart';
+import 'package:lurc/widgets/request_workspace.dart';
 import 'package:lurc/widgets/response_view.dart';
 
 class RequestScreen extends ConsumerStatefulWidget {
@@ -162,9 +163,12 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
         onHistory: _openHistory,
         onCollections: _openCollections,
       ),
-      body: Column(
-        children: [
-          RequestBar(
+      body: SafeArea(
+        top: false,
+        child: RequestWorkspace(
+          loading: request.loading,
+          result: request.response ?? request.error,
+          requestBar: RequestBar(
             method: request.method,
             controller: _urlController,
             loading: request.loading,
@@ -172,66 +176,59 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
             onSend: _sendRequest,
             onCancel: requestController.cancel,
           ),
-          Expanded(
-            child: DefaultTabController(
-              length: 3,
-              child: Column(
-                children: [
-                  const TabBar(
-                    tabs: [
-                      Tab(text: 'Params'),
-                      Tab(text: 'Headers'),
-                      Tab(text: 'Body'),
+          editor: DefaultTabController(
+            length: 3,
+            child: Column(
+              children: [
+                const TabBar(
+                  tabs: [
+                    Tab(text: 'Params'),
+                    Tab(text: 'Headers'),
+                    Tab(text: 'Body'),
+                  ],
+                ),
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: KeyValueEditor(
+                          key: ValueKey('params-$_editorRevision'),
+                          label: 'Query parameters',
+                          initialEntries: _queryParameters,
+                          onChanged: (entries) => _queryParameters = entries,
+                        ),
+                      ),
+                      SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: KeyValueEditor(
+                          key: ValueKey('headers-$_editorRevision'),
+                          label: 'Headers',
+                          initialEntries: _headers,
+                          onChanged: (entries) => _headers = entries,
+                        ),
+                      ),
+                      SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: RequestEditor(
+                          controller: _bodyController,
+                          mode: _bodyMode,
+                          onModeChanged: (mode) =>
+                              setState(() => _bodyMode = mode),
+                        ),
+                      ),
                     ],
                   ),
-                  Expanded(
-                    child: TabBarView(
-                      children: [
-                        SingleChildScrollView(
-                          padding: const EdgeInsets.all(12),
-                          child: KeyValueEditor(
-                            key: ValueKey('params-$_editorRevision'),
-                            label: 'Query parameters',
-                            initialEntries: _queryParameters,
-                            onChanged: (entries) =>
-                                _queryParameters = entries,
-                          ),
-                        ),
-                        SingleChildScrollView(
-                          padding: const EdgeInsets.all(12),
-                          child: KeyValueEditor(
-                            key: ValueKey('headers-$_editorRevision'),
-                            label: 'Headers',
-                            initialEntries: _headers,
-                            onChanged: (entries) => _headers = entries,
-                          ),
-                        ),
-                        SingleChildScrollView(
-                          padding: const EdgeInsets.all(12),
-                          child: RequestEditor(
-                            controller: _bodyController,
-                            mode: _bodyMode,
-                            onModeChanged: (mode) =>
-                                setState(() => _bodyMode = mode),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Divider(height: 1),
-                  SizedBox(
-                    height: MediaQuery.sizeOf(context).height * 0.38,
-                    child: ResponseView(
-                      response: request.response,
-                      error: request.error,
-                      loading: request.loading,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-        ],
+          response: ResponseView(
+            response: request.response,
+            error: request.error,
+            loading: request.loading,
+          ),
+        ),
       ),
     );
   }
