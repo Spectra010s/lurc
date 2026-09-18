@@ -23,9 +23,8 @@ class EnvironmentsScreen extends ConsumerWidget {
       ),
       body: environments.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
-          child: Text('Could not load environments.\n$error'),
-        ),
+        error: (error, _) =>
+            Center(child: Text('Could not load environments.\n$error')),
         data: (items) {
           if (items.isEmpty) return const _EmptyEnvironments();
           return ListView.separated(
@@ -83,8 +82,9 @@ class EnvironmentsScreen extends ConsumerWidget {
         builder: (_) => _EnvironmentEditor(environment: existing),
       ),
     );
-    if (result == null) return;
+    if (result == null || !context.mounted) return;
     await ref.read(environmentsControllerProvider.notifier).save(result);
+    if (!context.mounted) return;
     ref.read(activeEnvironmentIdProvider.notifier).selectedId = result.id;
   }
 }
@@ -106,10 +106,9 @@ class _EnvironmentEditorState extends State<_EnvironmentEditor> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.environment?.name);
-    _variables = widget.environment?.variables.entries
-            .map(
-              (entry) => KeyValueEntry(key: entry.key, value: entry.value),
-            )
+    _variables =
+        widget.environment?.variables.entries
+            .map((entry) => KeyValueEntry(key: entry.key, value: entry.value))
             .toList(growable: false) ??
         const [];
   }
@@ -126,7 +125,8 @@ class _EnvironmentEditorState extends State<_EnvironmentEditor> {
     Navigator.pop(
       context,
       Environment(
-        id: widget.environment?.id ??
+        id:
+            widget.environment?.id ??
             DateTime.now().microsecondsSinceEpoch.toString(),
         name: name,
         variables: keyValueEntriesToMap(_variables),
@@ -140,9 +140,7 @@ class _EnvironmentEditorState extends State<_EnvironmentEditor> {
       title: Text(
         widget.environment == null ? 'New environment' : 'Edit environment',
       ),
-      actions: [
-        TextButton(onPressed: _save, child: const Text('Save')),
-      ],
+      actions: [TextButton(onPressed: _save, child: const Text('Save'))],
     ),
     body: ListView(
       padding: const EdgeInsets.all(16),

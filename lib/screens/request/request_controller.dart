@@ -57,6 +57,12 @@ class RequestController extends Notifier<RequestState> {
     Map<String, String> queryParameters = const {},
     Map<String, String> headers = const {},
   }) async {
+    await ref.read(activeEnvironmentIdProvider.notifier).ready;
+    if (!ref.mounted) return;
+    if (ref.read(activeEnvironmentIdProvider) != null) {
+      await ref.read(environmentsControllerProvider.future);
+      if (!ref.mounted) return;
+    }
     final variables =
         ref.read(activeEnvironmentProvider)?.variables ?? const {};
     final resolvedUrl = resolveVariables(url.trim(), variables);

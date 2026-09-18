@@ -38,25 +38,42 @@ final activeEnvironmentProvider = Provider<Environment?>((ref) {
 });
 
 class ActiveEnvironmentIdController extends Notifier<String?> {
+  var _revision = 0;
+  late Future<void> _ready;
+  Future<void> _pending = Future<void>.value();
+
   @override
   String? build() {
-    unawaited(_restore());
+    final lifecycle = ref;
+    final revision = ++_revision;
+    _ready = _restore(lifecycle, revision);
     return null;
   }
+
+  Future<void> get ready => _ready;
+
+  Future<void> get persisted => _pending;
 
   String? get selectedId => state;
 
   set selectedId(String? id) {
+    _revision++;
     state = id;
-    unawaited(_persist(id));
+    final preferences = ref.read(sharedPreferencesProvider.future);
+    final write = _pending.then((_) => _persist(preferences, id));
+    _pending = write;
+    unawaited(write);
   }
 
-  Future<void> _restore() async {
-    final preferences = await ref.read(sharedPreferencesProvider.future);
-    if (!ref.mounted) return;
+  Future<void> _restore(Ref lifecycle, int revision) async {
+    final preferences = await lifecycle.read(sharedPreferencesProvider.future);
+    if (!lifecycle.mounted || revision != _revision) return;
     final savedId = preferences.getString(_activeEnvironmentKey);
-    final environments = await ref.read(environmentsControllerProvider.future);
-    if (!ref.mounted || savedId == null) return;
+    if (savedId == null) return;
+    final environments = await lifecycle.read(
+      environmentsControllerProvider.future,
+    );
+    if (!lifecycle.mounted || revision != _revision) return;
     if (environments.any((environment) => environment.id == savedId)) {
       state = savedId;
     } else {
@@ -64,13 +81,15 @@ class ActiveEnvironmentIdController extends Notifier<String?> {
     }
   }
 
-  Future<void> _persist(String? id) async {
-    final preferences = await ref.read(sharedPreferencesProvider.future);
-    if (id == null) {
-      await preferences.remove(_activeEnvironmentKey);
-    } else {
-      await preferences.setString(_activeEnvironmentKey, id);
-    }
+  Future<void> _persist(
+    Future<SharedPreferences> preferencesFuture,
+    String? id,
+  ) async {
+    final preferences = await preferencesFuture;
+    final saved = id == null
+        ? await preferences.remove(_activeEnvironmentKey)
+        : await preferences.setString(_activeEnvironmentKey, id);
+    if (!saved) throw StateError('Could not persist active environment');
   }
 }
 
@@ -82,17 +101,29 @@ class EnvironmentsController extends AsyncNotifier<List<Environment>> {
   }
 
   Future<void> save(Environment environment) async {
+    final lifecycle = ref;
     await future;
-    final repository = await ref.read(environmentRepositoryProvider.future);
+    if (!lifecycle.mounted) return;
+    final repository = await lifecycle.read(
+      environmentRepositoryProvider.future,
+    );
+    if (!lifecycle.mounted) return;
     final next = await repository.save(environment);
-    if (ref.mounted) state = AsyncData(next);
+    if (!lifecycle.mounted) return;
+    state = AsyncData(next);
   }
 
   Future<void> delete(String id) async {
+    final lifecycle = ref;
     await future;
-    final repository = await ref.read(environmentRepositoryProvider.future);
+    if (!lifecycle.mounted) return;
+    final repository = await lifecycle.read(
+      environmentRepositoryProvider.future,
+    );
+    if (!lifecycle.mounted) return;
     final next = await repository.delete(id);
-    if (ref.mounted) state = AsyncData(next);
+    if (!lifecycle.mounted) return;
+    state = AsyncData(next);
     if (ref.read(activeEnvironmentIdProvider) == id) {
       ref.read(activeEnvironmentIdProvider.notifier).selectedId = null;
     }

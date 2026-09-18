@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lurc/core/environments/environment.dart';
+import 'package:lurc/core/environments/environment_repository.dart';
 import 'package:lurc/core/http/http_client.dart';
 import 'package:lurc/core/http/request.dart';
 import 'package:lurc/core/http/response.dart';
@@ -92,11 +94,13 @@ void main() {
     );
     addTearDown(container.dispose);
 
-    await container.read(requestControllerProvider.notifier).send(
-      url: 'https://example.com',
-      body: '{invalid',
-      validateJsonBody: true,
-    );
+    await container
+        .read(requestControllerProvider.notifier)
+        .send(
+          url: 'https://example.com',
+          body: '{invalid',
+          validateJsonBody: true,
+        );
 
     expect(client.lastRequest, isNull);
     expect(
@@ -112,16 +116,57 @@ void main() {
     );
     addTearDown(container.dispose);
 
-    await container.read(requestControllerProvider.notifier).send(
-      url: 'https://example.com/users',
-      queryParameters: const {'page': '2', 'sort': 'name'},
-      headers: const {'Authorization': 'Bearer token'},
-      body: '{"active":true}',
-    );
+    await container
+        .read(requestControllerProvider.notifier)
+        .send(
+          url: 'https://example.com/users',
+          queryParameters: const {'page': '2', 'sort': 'name'},
+          headers: const {'Authorization': 'Bearer token'},
+          body: '{"active":true}',
+        );
 
     expect(client.lastRequest, isNotNull);
     expect(client.lastRequest!.queryParameters, {'page': '2', 'sort': 'name'});
     expect(client.lastRequest!.headers, {'Authorization': 'Bearer token'});
     expect(client.lastRequest!.body, '{"active":true}');
+  });
+
+  test('restores variables before resolving every request field', () async {
+    SharedPreferences.setMockInitialValues({'active_environment_id_v1': 'dev'});
+    final preferences = await SharedPreferences.getInstance();
+    await LocalEnvironmentRepository(preferences).save(
+      const Environment(
+        id: 'dev',
+        name: 'Development',
+        variables: {
+          'host': 'https://example.com',
+          'path': 'users',
+          'key': 'page',
+          'page': '2',
+          'header': 'Authorization',
+          'token': 'secret',
+          'enabled': 'true',
+        },
+      ),
+    );
+    final client = FakeHttpClient();
+    final container = ProviderContainer(
+      overrides: [httpClientProvider.overrideWithValue(client)],
+    );
+    addTearDown(container.dispose);
+    await container
+        .read(requestControllerProvider.notifier)
+        .send(
+          url: '{{host}}/{{path}}',
+          queryParameters: const {'{{key}}': '{{page}}'},
+          headers: const {'{{header}}': 'Bearer {{token}}'},
+          body: '{"active":{{enabled}}}',
+          validateJsonBody: true,
+        );
+    expect(client.lastRequest?.url, 'https://example.com/users');
+    expect(client.lastRequest?.queryParameters, {'page': '2'});
+    expect(client.lastRequest?.headers, {'Authorization': 'Bearer secret'});
+    expect(client.lastRequest?.body, '{"active":true}');
+    expect(container.read(requestControllerProvider).error, isNull);
   });
 }
