@@ -231,7 +231,8 @@ void main() {
 }
 
 class _MemoryRepository implements SavedRequestsRepository {
-  new([SavedRequestsState? initial]) : snapshot = initial ?? SavedRequestsState();
+  new([SavedRequestsState? initial])
+    : snapshot = initial ?? SavedRequestsState();
 
   SavedRequestsState snapshot;
 
@@ -240,7 +241,7 @@ class _MemoryRepository implements SavedRequestsRepository {
 
   @override
   Future<SavedRequestsState> saveCollection(Collection collection) async {
-    snapshot = SavedRequestsState(
+    return snapshot = SavedRequestsState(
       collections: [
         for (final current in snapshot.collections)
           if (current.id != collection.id) current,
@@ -248,12 +249,11 @@ class _MemoryRepository implements SavedRequestsRepository {
       ],
       requests: snapshot.requests,
     );
-    return snapshot;
   }
 
   @override
   Future<SavedRequestsState> saveRequest(SavedRequest request) async {
-    snapshot = SavedRequestsState(
+    return snapshot = SavedRequestsState(
       collections: snapshot.collections,
       requests: [
         for (final current in snapshot.requests)
@@ -261,12 +261,11 @@ class _MemoryRepository implements SavedRequestsRepository {
         request,
       ],
     );
-    return snapshot;
   }
 
   @override
   Future<SavedRequestsState> deleteCollection(String id) async {
-    snapshot = SavedRequestsState(
+    return snapshot = SavedRequestsState(
       collections: snapshot.collections.where((item) => item.id != id).toList(),
       requests: snapshot.requests.map((request) {
         return request.collectionId == id
@@ -274,16 +273,14 @@ class _MemoryRepository implements SavedRequestsRepository {
             : request;
       }).toList(),
     );
-    return snapshot;
   }
 
   @override
   Future<SavedRequestsState> deleteRequest(String id) async {
-    snapshot = SavedRequestsState(
+    return snapshot = SavedRequestsState(
       collections: snapshot.collections,
       requests: snapshot.requests.where((request) => request.id != id).toList(),
     );
-    return snapshot;
   }
 }
 
