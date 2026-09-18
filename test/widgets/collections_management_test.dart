@@ -10,19 +10,15 @@ import 'package:lurc/core/saved_requests/saved_requests_repository.dart';
 import 'package:lurc/core/saved_requests/saved_requests_state.dart';
 import 'package:lurc/screens/collections/collections_screen.dart';
 import 'package:lurc/screens/collections/saved_request_editor_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  late LocalSavedRequestsRepository repository;
+  late _MemoryRepository repository;
   late SavedRequest original;
-  late LocalSavedRequestsRepository activeRepository;
+  late _MemoryRepository activeRepository;
   late ProviderContainer container;
 
   setUp(() async {
-    SharedPreferences.setMockInitialValues({});
-    repository = LocalSavedRequestsRepository(
-      await SharedPreferences.getInstance(),
-    );
+    repository = _MemoryRepository();
     await repository.saveCollection(
       const Collection(id: 'a', name: 'Accounts'),
     );
@@ -51,26 +47,19 @@ void main() {
 
   tearDown(() => container.dispose());
 
-  Future<SavedRequestsState> read(WidgetTester tester) async =>
-      (await tester.runAsync(repository.load))!;
+  Future<SavedRequestsState> read(WidgetTester tester) => repository.load();
 
   Future<void> settle(WidgetTester tester) async {
-    // Finish plugin I/O and queued writes before settling UI animations.
-    await tester.runAsync(() async {
-      await container.read(savedRequestsControllerProvider.future);
-      await activeRepository.load();
-    });
+    await container.read(savedRequestsControllerProvider.future);
     await tester.pumpAndSettle();
   }
 
   Future<void> open(
     WidgetTester tester, {
-    LocalSavedRequestsRepository? storage,
+    _MemoryRepository? storage,
   }) async {
     activeRepository = storage ?? repository;
-    await tester.runAsync(() async {
-      await container.read(savedRequestsControllerProvider.future);
-    });
+    await container.read(savedRequestsControllerProvider.future);
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
@@ -190,7 +179,7 @@ void main() {
   testWidgets('failed edits retain the draft and can be retried', (
     tester,
   ) async {
-    final failing = _RetryRepository(repository.preferences);
+    final failing = _RetryRepository(repository.snapshot);
     await open(tester, storage: failing);
     await action(tester, 'Create user', 'Edit request');
     await tester.enterText(find.byType(TextFormField).first, 'Retry draft');
@@ -205,7 +194,7 @@ void main() {
     await tester.tap(find.text('Save'));
     await settle(tester);
     expect(find.byType(SavedRequestEditorScreen), findsNothing);
-    expect((await read(tester)).requests.single.name, 'Retry draft');
+    expect((await activeRepository.load()).requests.single.name, 'Retry draft');
   });
 
   testWidgets('opening a saved request returns the full request', (
@@ -241,8 +230,65 @@ void main() {
   });
 }
 
-class _RetryRepository extends LocalSavedRequestsRepository {
-  new(super.preferences);
+class _MemoryRepository implements SavedRequestsRepository {
+  new([SavedRequestsState? initial]) : snapshot = initial ?? SavedRequestsState();
+
+  SavedRequestsState snapshot;
+
+  @override
+  Future<SavedRequestsState> load() async => snapshot;
+
+  @override
+  Future<SavedRequestsState> saveCollection(Collection collection) async {
+    snapshot = SavedRequestsState(
+      collections: [
+        for (final current in snapshot.collections)
+          if (current.id != collection.id) current,
+        collection,
+      ],
+      requests: snapshot.requests,
+    );
+    return snapshot;
+  }
+
+  @override
+  Future<SavedRequestsState> saveRequest(SavedRequest request) async {
+    snapshot = SavedRequestsState(
+      collections: snapshot.collections,
+      requests: [
+        for (final current in snapshot.requests)
+          if (current.id != request.id) current,
+        request,
+      ],
+    );
+    return snapshot;
+  }
+
+  @override
+  Future<SavedRequestsState> deleteCollection(String id) async {
+    snapshot = SavedRequestsState(
+      collections: snapshot.collections.where((item) => item.id != id).toList(),
+      requests: snapshot.requests.map((request) {
+        return request.collectionId == id
+            ? request.copyWith(clearCollection: true)
+            : request;
+      }).toList(),
+    );
+    return snapshot;
+  }
+
+  @override
+  Future<SavedRequestsState> deleteRequest(String id) async {
+    snapshot = SavedRequestsState(
+      collections: snapshot.collections,
+      requests: snapshot.requests.where((request) => request.id != id).toList(),
+    );
+    return snapshot;
+  }
+}
+
+class _RetryRepository extends _MemoryRepository {
+  new(super.initial);
 
   var _failNext = true;
 
