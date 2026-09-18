@@ -6,8 +6,8 @@ import 'package:lurc/core/http/request_body_type.dart';
 import 'package:lurc/core/saved_requests/collection.dart';
 import 'package:lurc/core/saved_requests/saved_request.dart';
 import 'package:lurc/core/saved_requests/saved_requests_controller.dart';
-import 'package:lurc/core/saved_requests/saved_requests_state.dart';
 import 'package:lurc/core/saved_requests/saved_requests_repository.dart';
+import 'package:lurc/core/saved_requests/saved_requests_state.dart';
 import 'package:lurc/screens/collections/collections_screen.dart';
 import 'package:lurc/screens/collections/saved_request_editor_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -226,6 +226,6 @@ class _RetryRepository extends LocalSavedRequestsRepository {
       _failNext = false;
       throw StateError('Storage unavailable');
     }
-    return super.saveRequest(request);
+    return await super.saveRequest(request);
   }
 }
