@@ -53,6 +53,7 @@ class ActiveEnvironmentIdController extends Notifier<String?> {
 
   Future<void> _restore() async {
     final preferences = await ref.read(sharedPreferencesProvider.future);
+    if (!ref.mounted) return;
     final savedId = preferences.getString(_activeEnvironmentKey);
     final environments = await ref.read(environmentsControllerProvider.future);
     if (!ref.mounted || savedId == null) return;
