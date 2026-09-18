@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lurc/core/environments/environment.dart';
+import 'package:lurc/core/environments/environment_controller.dart';
 import 'package:lurc/core/http/request.dart';
 import 'package:lurc/core/http/request_body_type.dart';
 import 'package:lurc/core/http/request_record.dart';
@@ -7,6 +9,7 @@ import 'package:lurc/core/saved_requests/collection.dart';
 import 'package:lurc/core/saved_requests/saved_request.dart';
 import 'package:lurc/core/saved_requests/saved_requests_controller.dart';
 import 'package:lurc/screens/collections/collections_screen.dart';
+import 'package:lurc/screens/environments/environments_screen.dart';
 import 'package:lurc/screens/history/history_screen.dart';
 import 'package:lurc/screens/request/request_controller.dart';
 import 'package:lurc/widgets/key_value_editor.dart';
@@ -107,6 +110,12 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
     );
   }
 
+  Future<void> _openEnvironments() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(builder: (_) => const EnvironmentsScreen()),
+    );
+  }
+
   Future<void> _saveRequest(HttpMethod method) async {
     final library = await ref.read(savedRequestsControllerProvider.future);
     if (!mounted) return;
@@ -145,11 +154,21 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
   Widget build(BuildContext context) {
     final request = ref.watch(requestControllerProvider);
     final requestController = ref.read(requestControllerProvider.notifier);
+    final environments = ref.watch(environmentsControllerProvider).value ?? const [];
+    final activeEnvironment = ref.watch(activeEnvironmentProvider);
+    final environmentController =
+        ref.read(activeEnvironmentIdProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Lurc'),
         actions: [
+          _EnvironmentMenu(
+            environments: environments,
+            active: activeEnvironment,
+            onSelected: (id) => environmentController.selectedId = id,
+            onManage: _openEnvironments,
+          ),
           IconButton(
             tooltip: 'Save request',
             onPressed: request.loading
@@ -162,6 +181,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
       drawer: _WorkspaceDrawer(
         onHistory: _openHistory,
         onCollections: _openCollections,
+        onEnvironments: _openEnvironments,
       ),
       body: SafeArea(
         top: false,
@@ -180,6 +200,11 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
             length: 3,
             child: Column(
               children: [
+                if (activeEnvironment != null)
+                  _ActiveEnvironmentBanner(
+                    environment: activeEnvironment,
+                    onClear: () => environmentController.selectedId = null,
+                  ),
                 const TabBar(
                   tabs: [
                     Tab(text: 'Params'),
@@ -232,6 +257,100 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
       ),
     );
   }
+}
+
+class _EnvironmentMenu extends StatelessWidget {
+  const new({
+    required this.environments,
+    required this.active,
+    required this.onSelected,
+    required this.onManage,
+  });
+
+  final List<Environment> environments;
+  final Environment? active;
+  final ValueChanged<String?> onSelected;
+  final VoidCallback onManage;
+
+  @override
+  Widget build(BuildContext context) => PopupMenuButton<String>(
+    tooltip: active == null ? 'Select environment' : 'Environment: ${active!.name}',
+    icon: Icon(
+      active == null ? Icons.tune_outlined : Icons.tune,
+    ),
+    onSelected: (value) {
+      if (value == '__manage__') {
+        onManage();
+      } else if (value == '__none__') {
+        onSelected(null);
+      } else {
+        onSelected(value);
+      }
+    },
+    itemBuilder: (context) => [
+      if (active != null)
+        const PopupMenuItem(
+          value: '__none__',
+          child: Text('No environment'),
+        ),
+      ...environments.map(
+        (environment) => PopupMenuItem(
+          value: environment.id,
+          child: Row(
+            children: [
+              Icon(
+                environment.id == active?.id
+                    ? Icons.radio_button_checked
+                    : Icons.radio_button_off,
+                size: 18,
+              ),
+              const SizedBox(width: 10),
+              Expanded(child: Text(environment.name)),
+            ],
+          ),
+        ),
+      ),
+      const PopupMenuDivider(),
+      const PopupMenuItem(
+        value: '__manage__',
+        child: Text('Manage environments'),
+      ),
+    ],
+  );
+}
+
+class _ActiveEnvironmentBanner extends StatelessWidget {
+  const new({required this.environment, required this.onClear});
+
+  final Environment environment;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: Row(
+        children: [
+          const Icon(Icons.tune, size: 16),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '${environment.name} • ${environment.variables.length} variables',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            tooltip: 'Clear environment',
+            onPressed: onClear,
+            icon: const Icon(Icons.close, size: 18),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _SaveRequestDialog extends StatefulWidget {
@@ -307,10 +426,15 @@ class _SaveRequestResult {
 }
 
 class _WorkspaceDrawer extends StatelessWidget {
-  const new({required this.onHistory, required this.onCollections});
+  const new({
+    required this.onHistory,
+    required this.onCollections,
+    required this.onEnvironments,
+  });
 
   final VoidCallback onHistory;
   final VoidCallback onCollections;
+  final VoidCallback onEnvironments;
 
   @override
   Widget build(BuildContext context) => NavigationDrawer(
@@ -318,6 +442,7 @@ class _WorkspaceDrawer extends StatelessWidget {
       Navigator.pop(context);
       if (index == 1) onCollections();
       if (index == 2) onHistory();
+      if (index == 3) onEnvironments();
     },
     children: const [
       Padding(
