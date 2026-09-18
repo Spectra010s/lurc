@@ -123,10 +123,10 @@ void main() {
   test('rapid selections persist in order', () async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
-    final controller = container.read(activeEnvironmentIdProvider.notifier);
-    controller.selectedId = _first.id;
-    controller.selectedId = _second.id;
-    controller.selectedId = null;
+    final controller = container.read(activeEnvironmentIdProvider.notifier)
+      ..selectedId = _first.id
+      ..selectedId = _second.id
+      ..selectedId = null;
     await controller.ready;
     await controller.persisted;
     final preferences = await SharedPreferences.getInstance();

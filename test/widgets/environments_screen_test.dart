@@ -28,8 +28,7 @@ void main() {
     final container = ProviderScope.containerOf(
       tester.element(find.byType(EnvironmentsScreen)),
     );
-    final selection = container.read(activeEnvironmentIdProvider.notifier);
-    selection.selectedId = null;
+    container.read(activeEnvironmentIdProvider.notifier).selectedId = null;
     await tester.pumpAndSettle();
     await tester.tap(find.text('Development'));
     await tester.pumpAndSettle();
