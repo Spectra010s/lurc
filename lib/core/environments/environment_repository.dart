@@ -15,8 +15,20 @@ class LocalEnvironmentRepository implements EnvironmentRepository {
   static const _storageKey = 'environments_v1';
   final SharedPreferences _preferences;
 
+  Future<void> _pending = Future<void>.value();
+
+  Future<List<Environment>> _enqueue(
+    Future<List<Environment>> Function() operation,
+  ) {
+    final result = _pending.then((_) => operation());
+    _pending = result.then<void>((_) {}, onError: (Object _, StackTrace _) {});
+    return result;
+  }
+
   @override
-  Future<List<Environment>> load() async {
+  Future<List<Environment>> load() => _enqueue(_read);
+
+  Future<List<Environment>> _read() async {
     await _preferences.reload();
     final raw = _preferences.getString(_storageKey);
     if (raw == null) return const [];
@@ -24,16 +36,15 @@ class LocalEnvironmentRepository implements EnvironmentRepository {
     if (decoded is! List) throw const FormatException('Invalid environments');
     return decoded
         .map(
-          (item) => Environment.fromJson(
-            Map<String, Object?>.from(item as Map),
-          ),
+          (item) =>
+              Environment.fromJson(Map<String, Object?>.from(item as Map)),
         )
         .toList(growable: false);
   }
 
   @override
-  Future<List<Environment>> save(Environment environment) async {
-    final environments = [...await load()];
+  Future<List<Environment>> save(Environment environment) => _enqueue(() async {
+    final environments = [...await _read()];
     final index = environments.indexWhere((item) => item.id == environment.id);
     if (index == -1) {
       environments.add(environment);
@@ -42,15 +53,15 @@ class LocalEnvironmentRepository implements EnvironmentRepository {
     }
     await _persist(environments);
     return List.unmodifiable(environments);
-  }
+  });
 
   @override
-  Future<List<Environment>> delete(String id) async {
-    final environments = [...await load()]
+  Future<List<Environment>> delete(String id) => _enqueue(() async {
+    final environments = [...await _read()]
       ..removeWhere((item) => item.id == id);
     await _persist(environments);
     return List.unmodifiable(environments);
-  }
+  });
 
   Future<void> _persist(List<Environment> environments) async {
     final encoded = jsonEncode(
