@@ -8,6 +8,7 @@ class RequestBar extends StatelessWidget {
     required this.loading,
     required this.onMethodChanged,
     required this.onSend,
+    required this.onCancel,
     super.key,
   });
 
@@ -16,52 +17,72 @@ class RequestBar extends StatelessWidget {
   final bool loading;
   final ValueChanged<HttpMethod> onMethodChanged;
   final VoidCallback onSend;
+  final VoidCallback onCancel;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+      child: Column(
         children: [
-          DropdownButton<HttpMethod>(
-            value: method,
-            onChanged: loading
-                ? null
-                : (value) {
-                    if (value != null) onMethodChanged(value);
-                  },
-            items: HttpMethod.values
-                .map(
-                  (value) => DropdownMenuItem(
-                    value: value,
-                    child: Text(value.name.toUpperCase()),
-                  ),
-                )
-                .toList(),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: TextField(
-              controller: controller,
-              keyboardType: TextInputType.url,
-              textInputAction: TextInputAction.go,
-              onSubmitted: (_) => onSend(),
-              decoration: const InputDecoration(
-                hintText: 'https://example.com',
-                border: OutlineInputBorder(),
-              ),
+          TextField(
+            controller: controller,
+            enabled: !loading,
+            keyboardType: TextInputType.url,
+            textInputAction: TextInputAction.go,
+            autocorrect: false,
+            enableSuggestions: false,
+            onSubmitted: (_) {
+              if (!loading) onSend();
+            },
+            decoration: const InputDecoration(
+              hintText: 'https://example.com',
+              border: OutlineInputBorder(),
+              isDense: true,
             ),
           ),
-          const SizedBox(width: 8),
-          FilledButton(
-            onPressed: loading ? null : onSend,
-            child: loading
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Send'),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<HttpMethod>(
+                  initialValue: method,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                  onChanged: loading
+                      ? null
+                      : (value) {
+                          if (value != null) onMethodChanged(value);
+                        },
+                  items: HttpMethod.values
+                      .map(
+                        (value) => DropdownMenuItem(
+                          value: value,
+                          child: Text(value.name.toUpperCase()),
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                flex: 2,
+                child: loading
+                    ? OutlinedButton.icon(
+                        onPressed: onCancel,
+                        icon: const Icon(Icons.stop),
+                        label: const Text('Cancel'),
+                      )
+                    : FilledButton.icon(
+                        onPressed: onSend,
+                        icon: const Icon(Icons.send),
+                        label: const Text('Send'),
+                      ),
+              ),
+            ],
           ),
         ],
       ),

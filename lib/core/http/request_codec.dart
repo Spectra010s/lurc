@@ -1,0 +1,58 @@
+import 'package:lurc/core/http/request.dart';
+import 'package:lurc/core/http/request_body_type.dart';
+import 'package:lurc/core/http/request_record.dart';
+import 'package:lurc/core/http/request_snapshot.dart';
+
+Map<String, Object?> requestRecordToJson(RequestRecord record) => {
+      'id': record.id,
+      'sentAt': record.sentAt.toIso8601String(),
+      'method': record.request.method.name,
+      'url': record.request.url,
+      'headers': record.request.headers,
+      'queryParameters': record.request.queryParameters,
+      'body': record.request.body,
+      'bodyType': record.request.bodyType.name,
+      'statusCode': record.statusCode,
+      'durationMs': record.durationMs,
+    };
+
+RequestRecord requestRecordFromJson(Map<String, Object?> json) {
+  final methodName = json['method'] as String? ?? HttpMethod.get.name;
+  final method = HttpMethod.values.firstWhere(
+    (value) => value.name == methodName,
+    orElse: () => HttpMethod.get,
+  );
+  final bodyTypeName = json['bodyType'] as String? ?? RequestBodyType.none.name;
+  final bodyType = RequestBodyType.values.firstWhere(
+    (value) => value.name == bodyTypeName,
+    orElse: () => RequestBodyType.none,
+  );
+  final id = json['id'];
+  final sentAt = json['sentAt'];
+
+  if (id is! String || sentAt is! String) {
+    throw const FormatException('Invalid request history entry');
+  }
+
+  return RequestRecord(
+    id: id,
+    sentAt: DateTime.parse(sentAt),
+    request: RequestSnapshot(
+      method: method,
+      url: json['url'] as String? ?? '',
+      headers: _stringMap(json['headers']),
+      queryParameters: _stringMap(json['queryParameters']),
+      body: json['body'] as String?,
+      bodyType: bodyType,
+    ),
+    statusCode: json['statusCode'] as int?,
+    durationMs: json['durationMs'] as int?,
+  );
+}
+
+Map<String, String> _stringMap(Object? value) {
+  if (value is! Map<Object?, Object?>) return const {};
+  return value.map(
+    (key, item) => MapEntry(key.toString(), item.toString()),
+  );
+}
