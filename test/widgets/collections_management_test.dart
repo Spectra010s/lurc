@@ -53,7 +53,10 @@ void main() {
         child: const MaterialApp(home: CollectionsScreen()),
       ),
     );
-    await tester.pumpAndSettle();
+    // The loading view contains an indeterminate progress indicator, so
+    // pumpAndSettle can wait forever while the repository initializes.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
   }
 
   Future<void> action(WidgetTester tester, String item, String action) async {
