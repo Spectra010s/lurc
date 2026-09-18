@@ -15,6 +15,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   late LocalSavedRequestsRepository repository;
   late SavedRequest original;
+  late LocalSavedRequestsRepository activeRepository;
+  late ProviderContainer container;
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
@@ -37,33 +39,53 @@ void main() {
       bodyType: RequestBodyType.json,
     );
     await repository.saveRequest(original);
+    activeRepository = repository;
+    container = ProviderContainer(
+      overrides: [
+        savedRequestsRepositoryProvider.overrideWith(
+          (ref) => activeRepository,
+        ),
+      ],
+    );
   });
+
+  tearDown(() => container.dispose());
+
+  Future<SavedRequestsState> read(WidgetTester tester) async =>
+      (await tester.runAsync(repository.load))!;
+
+  Future<void> settle(WidgetTester tester) async {
+    // Finish plugin I/O and queued writes before settling UI animations.
+    await tester.runAsync(() async {
+      await container.read(savedRequestsControllerProvider.future);
+      await activeRepository.load();
+    });
+    await tester.pumpAndSettle();
+  }
 
   Future<void> open(
     WidgetTester tester, {
     LocalSavedRequestsRepository? storage,
   }) async {
+    activeRepository = storage ?? repository;
+    await tester.runAsync(() async {
+      await container.read(savedRequestsControllerProvider.future);
+    });
     await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          savedRequestsRepositoryProvider.overrideWith(
-            (ref) => storage ?? repository,
-          ),
-        ],
+      UncontrolledProviderScope(
+        container: container,
         child: const MaterialApp(home: CollectionsScreen()),
       ),
     );
-    // The loading view contains an indeterminate progress indicator, so
-    // pumpAndSettle can wait forever while the repository initializes.
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
+    await settle(tester);
+    expect(find.byTooltip('Actions for Create user'), findsOneWidget);
   }
 
   Future<void> action(WidgetTester tester, String item, String action) async {
     await tester.tap(find.byTooltip('Actions for $item'));
-    await tester.pumpAndSettle();
+    await settle(tester);
     await tester.tap(find.text(action));
-    await tester.pumpAndSettle();
+    await settle(tester);
   }
 
   testWidgets('rename and move preserve all request fields', (tester) async {
@@ -71,23 +93,23 @@ void main() {
     await action(tester, 'Create user', 'Rename request');
     await tester.enterText(find.byType(TextFormField), '   ');
     await tester.tap(find.text('Save'));
-    await tester.pumpAndSettle();
+    await settle(tester);
     expect(find.text('Enter a name'), findsOneWidget);
     await tester.enterText(find.byType(TextFormField), 'Create account');
     await tester.tap(find.text('Save'));
-    await tester.pumpAndSettle();
+    await settle(tester);
     await action(tester, 'Create account', 'Move request');
     await tester.tap(find.text('Billing').last);
-    await tester.pumpAndSettle();
+    await settle(tester);
     expect(
-      (await repository.load()).requests.single.toJson(),
+      (await read(tester)).requests.single.toJson(),
       original.copyWith(name: 'Create account', collectionId: 'b').toJson(),
     );
     await action(tester, 'Create account', 'Move request');
     await tester.tap(find.text('Unfiled').last);
-    await tester.pumpAndSettle();
+    await settle(tester);
     expect(
-      (await repository.load()).requests.single.toJson(),
+      (await read(tester)).requests.single.toJson(),
       original.copyWith(name: 'Create account', clearCollection: true).toJson(),
     );
   });
@@ -99,18 +121,18 @@ void main() {
     await action(tester, 'Accounts', 'Rename collection');
     await tester.enterText(find.byType(TextFormField), 'People');
     await tester.tap(find.text('Save'));
-    await tester.pumpAndSettle();
+    await settle(tester);
     await action(tester, 'People', 'Delete collection');
     expect(find.textContaining('No requests will be deleted'), findsOneWidget);
     await tester.tap(find.text('Cancel'));
-    await tester.pumpAndSettle();
-    expect((await repository.load()).collections.length, 2);
+    await settle(tester);
+    expect((await read(tester)).collections.length, 2);
     await action(tester, 'People', 'Delete collection');
     await tester.tap(find.text('Delete'));
-    await tester.pumpAndSettle();
+    await settle(tester);
     expect(find.text('Unfiled'), findsOneWidget);
     expect(
-      (await repository.load()).requests.single.toJson(),
+      (await read(tester)).requests.single.toJson(),
       original.copyWith(clearCollection: true).toJson(),
     );
   });
@@ -119,12 +141,12 @@ void main() {
     await open(tester);
     await action(tester, 'Create user', 'Delete request');
     await tester.tap(find.text('Cancel'));
-    await tester.pumpAndSettle();
-    expect((await repository.load()).requests.length, 1);
+    await settle(tester);
+    expect((await read(tester)).requests.length, 1);
     await action(tester, 'Create user', 'Delete request');
     await tester.tap(find.text('Delete'));
-    await tester.pumpAndSettle();
-    expect((await repository.load()).requests, isEmpty);
+    await settle(tester);
+    expect((await read(tester)).requests, isEmpty);
     expect(find.text('No saved requests'), findsNWidgets(2));
   });
 
@@ -136,10 +158,10 @@ void main() {
     expect(find.byType(SavedRequestEditorScreen), findsOneWidget);
     await tester.enterText(find.byType(TextFormField).first, 'Updated');
     await tester.tap(find.text('Save'));
-    await tester.pumpAndSettle();
+    await settle(tester);
     expect(find.byType(SavedRequestEditorScreen), findsNothing);
     expect(
-      (await repository.load()).requests.single.toJson(),
+      (await read(tester)).requests.single.toJson(),
       original.copyWith(name: 'Updated').toJson(),
     );
   });
@@ -148,19 +170,19 @@ void main() {
     await open(tester);
     await action(tester, 'Create user', 'Edit request');
     await tester.tap(find.text('Query parameters'));
-    await tester.pumpAndSettle();
+    await settle(tester);
     final queryValue = find.widgetWithText(TextField, '2');
     await tester.ensureVisible(queryValue);
     await tester.enterText(queryValue, '3');
     await tester.tap(find.text('Query parameters'));
-    await tester.pumpAndSettle();
+    await settle(tester);
     await tester.tap(find.text('Query parameters'));
-    await tester.pumpAndSettle();
+    await settle(tester);
     expect(find.widgetWithText(TextField, '3'), findsOneWidget);
     await tester.tap(find.text('Save'));
-    await tester.pumpAndSettle();
+    await settle(tester);
     expect(
-      (await repository.load()).requests.single.toJson(),
+      (await read(tester)).requests.single.toJson(),
       original.copyWith(queryParameters: {'page': '3'}).toJson(),
     );
   });
@@ -168,22 +190,22 @@ void main() {
   testWidgets('failed edits retain the draft and can be retried', (
     tester,
   ) async {
-    final failing = _RetryRepository(await SharedPreferences.getInstance());
+    final failing = _RetryRepository(repository.preferences);
     await open(tester, storage: failing);
     await action(tester, 'Create user', 'Edit request');
     await tester.enterText(find.byType(TextFormField).first, 'Retry draft');
     await tester.tap(find.text('Save'));
-    await tester.pumpAndSettle();
+    await settle(tester);
     expect(find.text('Could not save request. Please retry.'), findsOneWidget);
     expect(find.text('Retry draft'), findsOneWidget);
     expect(
-      (await repository.load()).requests.single.toJson(),
+      (await read(tester)).requests.single.toJson(),
       original.toJson(),
     );
     await tester.tap(find.text('Save'));
-    await tester.pumpAndSettle();
+    await settle(tester);
     expect(find.byType(SavedRequestEditorScreen), findsNothing);
-    expect((await repository.load()).requests.single.name, 'Retry draft');
+    expect((await read(tester)).requests.single.name, 'Retry draft');
   });
 
   testWidgets('opening a saved request returns the full request', (
@@ -191,7 +213,8 @@ void main() {
   ) async {
     SavedRequest? result;
     await tester.pumpWidget(
-      ProviderScope(
+      UncontrolledProviderScope(
+        container: container,
         child: MaterialApp(
           home: Builder(
             builder: (context) => Scaffold(
@@ -211,9 +234,9 @@ void main() {
       ),
     );
     await tester.tap(find.text('Open collections'));
-    await tester.pumpAndSettle();
+    await settle(tester);
     await tester.tap(find.text('Create user'));
-    await tester.pumpAndSettle();
+    await settle(tester);
     expect(result?.toJson(), original.toJson());
   });
 }
