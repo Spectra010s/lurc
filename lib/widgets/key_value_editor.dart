@@ -170,7 +170,7 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
           ),
           if (widget.allowSecrets)
             IconButton(
-              tooltip: row.secret ? 'Secret value hidden' : 'Mark as secret',
+              tooltip: row.secret ? 'Show value' : 'Hide value',
               onPressed: () => _setSecret(index, !row.secret),
               icon: Icon(
                 row.secret
@@ -192,7 +192,19 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
             keyField,
             const SizedBox(height: LurcSpacing.sm),
             valueField,
-            Align(alignment: Alignment.centerRight, child: actions),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    row.enabled ? 'Enabled' : 'Disabled',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                actions,
+              ],
+            ),
             const Divider(height: 1),
           ],
         );
