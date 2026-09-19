@@ -15,6 +15,7 @@ class ResponseView extends StatelessWidget {
   final HttpResponse? response;
   final String? error;
   final bool loading;
+  final String? semanticLabel;
 
   String _formattedBody(String body) {
     try {
@@ -38,6 +39,7 @@ class ResponseView extends StatelessWidget {
 
     if (error != null) {
       return _ResponseState(
+        semanticLabel: 'Request failed',
         icon: Icons.error_outline_rounded,
         title: 'Request failed',
         message: error!,
@@ -63,7 +65,10 @@ class ResponseView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
+          Semantics(
+            container: true,
+            label: 'Response status $statusCode, ${currentResponse.duration.inMilliseconds} milliseconds, ${utf8.encode(currentResponse.body).length} bytes',
+            child: Padding(
             padding: const EdgeInsets.fromLTRB(
               LurcSpacing.lg,
               LurcSpacing.md,
@@ -102,6 +107,7 @@ class ResponseView extends StatelessWidget {
                   value: '${utf8.encode(currentResponse.body).length} bytes',
                 ),
               ],
+            ),
             ),
           ),
           TabBar(
@@ -196,6 +202,7 @@ class _ResponseState extends StatelessWidget {
     required this.title,
     required this.message,
     this.loading = false,
+    this.semanticLabel,
   });
 
   final IconData icon;
@@ -204,7 +211,10 @@ class _ResponseState extends StatelessWidget {
   final bool loading;
 
   @override
-  Widget build(BuildContext context) => Center(
+  Widget build(BuildContext context) => Semantics(
+    liveRegion: loading || semanticLabel != null,
+    label: semanticLabel,
+    child: Center(
     child: SingleChildScrollView(
       padding: const EdgeInsets.all(LurcSpacing.xl),
       child: Column(
@@ -237,6 +247,7 @@ class _ResponseState extends StatelessWidget {
           ),
         ],
       ),
+    ),
     ),
   );
 }
