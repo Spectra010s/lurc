@@ -81,6 +81,21 @@ class RequestBar extends StatelessWidget {
                   label: const Text('Send'),
                 ),
         );
+        final compactAction = SizedBox(
+          width: 52,
+          height: 48,
+          child: loading
+              ? IconButton.outlined(
+                  tooltip: 'Cancel request',
+                  onPressed: onCancel,
+                  icon: const Icon(Icons.stop_rounded),
+                )
+              : IconButton.filled(
+                  tooltip: 'Send request',
+                  onPressed: onSend,
+                  icon: const Icon(Icons.send_rounded),
+                ),
+        );
 
         if (compact) {
           return Column(
@@ -91,10 +106,10 @@ class RequestBar extends StatelessWidget {
                   methodPicker,
                   const SizedBox(width: LurcSpacing.sm),
                   Expanded(child: urlField),
+                  const SizedBox(width: LurcSpacing.sm),
+                  compactAction,
                 ],
               ),
-              const SizedBox(height: LurcSpacing.sm),
-              SizedBox(width: double.infinity, child: action),
             ],
           );
         }
