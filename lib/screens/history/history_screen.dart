@@ -288,7 +288,7 @@ class _HistoryState extends StatelessWidget {
 
 
 class _HistoryError extends StatelessWidget {
-  const _HistoryError({required this.onRetry});
+  const new({required this.onRetry});
 
   final VoidCallback onRetry;
 
