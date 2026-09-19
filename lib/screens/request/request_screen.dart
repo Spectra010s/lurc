@@ -346,18 +346,26 @@ class _ActiveEnvironmentBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+    color: Theme.of(context).colorScheme.surfaceContainerLow,
     child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: LurcSpacing.lg,
+        vertical: LurcSpacing.xs,
+      ),
       child: Row(
         children: [
-          const Icon(Icons.tune, size: 16),
-          const SizedBox(width: 8),
+          Icon(
+            Icons.tune,
+            size: 16,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          const SizedBox(width: LurcSpacing.sm),
           Expanded(
             child: Text(
-              '${environment.name} • ${environment.variables.length} variables',
+              environment.name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelMedium,
             ),
           ),
           IconButton(
