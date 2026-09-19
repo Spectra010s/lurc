@@ -515,6 +515,7 @@ class _WorkspaceDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => NavigationDrawer(
+    selectedIndex: 0,
     onDestinationSelected: (index) {
       Navigator.pop(context);
       if (index == 1) onCollections();
@@ -570,7 +571,22 @@ class _WorkspaceDrawer extends StatelessWidget {
           ),
         ),
       ),
-      const Divider(),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(
+          28,
+          LurcSpacing.sm,
+          LurcSpacing.lg,
+          LurcSpacing.xs,
+        ),
+        child: Text(
+          'WORKSPACE',
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.1,
+          ),
+        ),
+      ),
       const NavigationDrawerDestination(
         icon: Icon(Icons.send_outlined),
         selectedIcon: Icon(Icons.send),
@@ -586,6 +602,22 @@ class _WorkspaceDrawer extends StatelessWidget {
         label: Text('History'),
       ),
       const Divider(),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(
+          28,
+          LurcSpacing.sm,
+          LurcSpacing.lg,
+          LurcSpacing.xs,
+        ),
+        child: Text(
+          'APP',
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.1,
+          ),
+        ),
+      ),
       const NavigationDrawerDestination(
         icon: Icon(Icons.tune_outlined),
         label: Text('Environments'),
