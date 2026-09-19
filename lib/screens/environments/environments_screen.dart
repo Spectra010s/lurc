@@ -6,6 +6,16 @@ import 'package:lurc/core/environments/environment.dart';
 import 'package:lurc/core/environments/environment_controller.dart';
 import 'package:lurc/widgets/key_value_editor.dart';
 
+List<EnvironmentVariable> _environmentEntries(List<KeyValueEntry> entries) => [
+  for (final entry in entries)
+    if (entry.enabled && entry.key.trim().isNotEmpty)
+      EnvironmentVariable(
+        key: entry.key.trim(),
+        value: entry.value,
+        secret: entry.secret,
+      ),
+];
+
 class EnvironmentsScreen extends ConsumerWidget {
   const new({super.key});
 
@@ -107,8 +117,14 @@ class _EnvironmentEditorState extends State<_EnvironmentEditor> {
     super.initState();
     _nameController = TextEditingController(text: widget.environment?.name);
     _variables =
-        widget.environment?.variables.entries
-            .map((entry) => KeyValueEntry(key: entry.key, value: entry.value))
+        widget.environment?.variables
+            .map(
+              (variable) => KeyValueEntry(
+                key: variable.key,
+                value: variable.value,
+                secret: variable.secret,
+              ),
+            )
             .toList(growable: false) ??
         const [];
   }
@@ -129,7 +145,7 @@ class _EnvironmentEditorState extends State<_EnvironmentEditor> {
             widget.environment?.id ??
             DateTime.now().microsecondsSinceEpoch.toString(),
         name: name,
-        variables: keyValueEntriesToMap(_variables),
+        variables: _environmentEntries(_variables),
       ),
     );
   }
@@ -162,6 +178,7 @@ class _EnvironmentEditorState extends State<_EnvironmentEditor> {
         KeyValueEditor(
           label: 'Variables',
           initialEntries: _variables,
+          allowSecrets: true,
           onChanged: (entries) => _variables = entries,
         ),
       ],

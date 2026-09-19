@@ -5,11 +5,13 @@ class KeyValueEntry {
     required this.key,
     required this.value,
     this.enabled = true,
+    this.secret = false,
   });
 
   final String key;
   final String value;
   final bool enabled;
+  final bool secret;
 }
 
 Map<String, String> keyValueEntriesToMap(List<KeyValueEntry> entries) {
@@ -25,12 +27,14 @@ class KeyValueEditor extends StatefulWidget {
     required this.label,
     required this.onChanged,
     this.initialEntries = const [],
+    this.allowSecrets = false,
     super.key,
   });
 
   final String label;
   final ValueChanged<List<KeyValueEntry>> onChanged;
   final List<KeyValueEntry> initialEntries;
+  final bool allowSecrets;
 
   @override
   State<KeyValueEditor> createState() => _KeyValueEditorState();
@@ -50,6 +54,7 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
                 key: entry.key,
                 value: entry.value,
                 enabled: entry.enabled,
+                secret: entry.secret,
               ),
             )
             .toList();
@@ -63,6 +68,7 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
               key: row.keyController.text,
               value: row.valueController.text,
               enabled: row.enabled,
+              secret: row.secret,
             ),
           )
           .toList(growable: false),
@@ -82,6 +88,11 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
 
   void _setEnabled(int index, bool enabled) {
     setState(() => _rows[index].enabled = enabled);
+    _notifyChanged();
+  }
+
+  void _setSecret(int index, bool secret) {
+    setState(() => _rows[index].secret = secret);
     _notifyChanged();
   }
 
@@ -148,6 +159,7 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
                 Expanded(
                   child: TextField(
                     controller: _rows[index].valueController,
+                    obscureText: widget.allowSecrets && _rows[index].secret,
                     autocorrect: false,
                     enableSuggestions: false,
                     textInputAction: TextInputAction.next,
@@ -162,6 +174,19 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
                     ),
                   ),
                 ),
+                if (widget.allowSecrets)
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    tooltip: _rows[index].secret
+                        ? 'Secret value hidden'
+                        : 'Mark as secret',
+                    onPressed: () => _setSecret(index, !_rows[index].secret),
+                    icon: Icon(
+                      _rows[index].secret
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                    ),
+                  ),
                 IconButton(
                   visualDensity: VisualDensity.compact,
                   tooltip: 'Remove row',
@@ -179,13 +204,19 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
 }
 
 class _EditorRow {
-  new({String key = '', String value = '', this.enabled = true})
+  new({
+    String key = '',
+    String value = '',
+    this.enabled = true,
+    this.secret = false,
+  })
       : keyController = TextEditingController(text: key),
         valueController = TextEditingController(text: value);
 
   final TextEditingController keyController;
   final TextEditingController valueController;
   bool enabled;
+  bool secret;
 
   void dispose() {
     keyController.dispose();
