@@ -4,6 +4,7 @@ import 'package:lurc/core/saved_requests/collection.dart';
 import 'package:lurc/core/saved_requests/saved_request.dart';
 import 'package:lurc/core/saved_requests/saved_requests_controller.dart';
 import 'package:lurc/screens/collections/saved_request_editor_screen.dart';
+import 'package:lurc/theme/lurc_theme.dart';
 
 enum _RequestAction { edit, rename, move, delete }
 
@@ -261,11 +262,11 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
     key: PageStorageKey('collection-${collection.id}'),
     initiallyExpanded: true,
     controlAffinity: ListTileControlAffinity.leading,
-    childrenPadding: const EdgeInsets.only(left: 16),
+    childrenPadding: const EdgeInsets.only(left: LurcSpacing.lg),
     title: Row(
       children: [
         const Icon(Icons.folder_outlined, size: 20),
-        const SizedBox(width: 8),
+        const SizedBox(width: LurcSpacing.sm),
         Expanded(child: Text(collection.name)),
       ],
     ),
@@ -387,7 +388,12 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
                     return const _EmptyLibrary();
                   }
                   return ListView(
-                    padding: const EdgeInsets.only(bottom: 96),
+                    padding: const EdgeInsets.fromLTRB(
+                      LurcSpacing.sm,
+                      LurcSpacing.sm,
+                      LurcSpacing.sm,
+                      96,
+                    ),
                     children: [
                       for (final collection
                           in state.childCollections(null))
@@ -488,19 +494,30 @@ class _EmptyLibrary extends StatelessWidget {
   const new();
 
   @override
-  Widget build(BuildContext context) => const Center(
+  Widget build(BuildContext context) => Center(
     child: Padding(
-      padding: EdgeInsets.all(32),
+      padding: const EdgeInsets.all(LurcSpacing.xxl),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.folder_open_outlined, size: 48),
-          SizedBox(height: 12),
-          Text('No saved requests yet'),
-          SizedBox(height: 6),
+          Icon(
+            Icons.folder_open_outlined,
+            size: 44,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(height: LurcSpacing.md),
+          Text(
+            'No saved requests yet',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: LurcSpacing.sm),
           Text(
             'Create a collection, then save requests from the '
             'request workspace.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
