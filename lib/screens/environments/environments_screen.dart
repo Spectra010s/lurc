@@ -34,8 +34,9 @@ class EnvironmentsScreen extends ConsumerWidget {
       ),
       body: environments.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) =>
-            Center(child: Text('Could not load environments.\n$error')),
+        error: (_, _) => _EnvironmentError(
+          onRetry: () => ref.invalidate(environmentsControllerProvider),
+        ),
         data: (items) {
           if (items.isEmpty) return const _EmptyEnvironments();
           return ListView.separated(
@@ -266,6 +267,49 @@ class _EmptyEnvironments extends StatelessWidget {
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+
+class _EnvironmentError extends StatelessWidget {
+  const new({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: SingleChildScrollView(
+      padding: const EdgeInsets.all(LurcSpacing.xxl),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.cloud_off_outlined,
+            size: 44,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(height: LurcSpacing.md),
+          Text(
+            'Could not load environments',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: LurcSpacing.sm),
+          Text(
+            'Your environments are still on this device. Try loading them again.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: LurcSpacing.lg),
+          FilledButton.tonal(
+            onPressed: onRetry,
+            child: const Text('Retry'),
           ),
         ],
       ),
