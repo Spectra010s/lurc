@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 const _themeModeKey = 'theme_mode';
 
 class ThemeModeController extends ChangeNotifier {
-  ThemeModeController._(this._preferences, this._mode);
+  new _(this._preferences, this._mode);
 
   final SharedPreferences _preferences;
   ThemeMode _mode;
@@ -14,7 +14,9 @@ class ThemeModeController extends ChangeNotifier {
   static Future<ThemeModeController> load() async {
     final preferences = await SharedPreferences.getInstance();
     final saved = preferences.getString(_themeModeKey);
-    final mode = ThemeMode.values.where((value) => value.name == saved).firstOrNull;
+    final mode = ThemeMode.values
+        .where((value) => value.name == saved)
+        .firstOrNull;
     return ThemeModeController._(preferences, mode ?? ThemeMode.system);
   }
 
