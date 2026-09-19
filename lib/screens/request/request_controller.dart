@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lurc/core/environments/environment_controller.dart';
+import 'package:lurc/core/environments/variable_resolver.dart';
 import 'package:lurc/core/http/http_client.dart';
 import 'package:lurc/core/http/request.dart';
 import 'package:lurc/core/http/request_body_type.dart';
@@ -17,12 +19,10 @@ class RequestState {
     this.error,
     this.loading = false,
   });
-
   final HttpMethod method;
   final HttpResponse? response;
   final String? error;
   final bool loading;
-
   RequestState copyWith({
     HttpMethod? method,
     HttpResponse? response,
@@ -30,34 +30,24 @@ class RequestState {
     bool? loading,
     bool clearResponse = false,
     bool clearError = false,
-  }) {
-    return RequestState(
-      method: method ?? this.method,
-      response: clearResponse ? null : response ?? this.response,
-      error: clearError ? null : error ?? this.error,
-      loading: loading ?? this.loading,
-    );
-  }
+  }) => RequestState(
+    method: method ?? this.method,
+    response: clearResponse ? null : response ?? this.response,
+    error: clearError ? null : error ?? this.error,
+    loading: loading ?? this.loading,
+  );
 }
 
 final httpClientProvider = Provider<LurcHttpClient>((ref) => LurcHttpClient());
-
 final requestControllerProvider =
     NotifierProvider<RequestController, RequestState>(RequestController.new);
 
 class RequestController extends Notifier<RequestState> {
   CancelToken? _cancelToken;
-
   @override
   RequestState build() => const RequestState();
-
-  void setMethod(HttpMethod method) {
-    state = state.copyWith(method: method);
-  }
-
-  void cancel() {
-    _cancelToken?.cancel();
-  }
+  void setMethod(HttpMethod method) => state = state.copyWith(method: method);
+  void cancel() => _cancelToken?.cancel();
 
   Future<void> send({
     required String url,
@@ -67,14 +57,25 @@ class RequestController extends Notifier<RequestState> {
     Map<String, String> queryParameters = const {},
     Map<String, String> headers = const {},
   }) async {
-    final trimmedUrl = url.trim();
-    final uri = Uri.tryParse(trimmedUrl);
-
-    if (trimmedUrl.isEmpty) {
+    await ref.read(activeEnvironmentIdProvider.notifier).ready;
+    if (!ref.mounted) return;
+    if (ref.read(activeEnvironmentIdProvider) != null) {
+      await ref.read(environmentsControllerProvider.future);
+      if (!ref.mounted) return;
+    }
+    final variables =
+        ref.read(activeEnvironmentProvider)?.variables ?? const {};
+    final resolvedUrl = resolveVariables(url.trim(), variables);
+    final resolvedBody = body == null
+        ? null
+        : resolveVariables(body, variables);
+    final resolvedQuery = resolveVariableMap(queryParameters, variables);
+    final resolvedHeaders = resolveVariableMap(headers, variables);
+    final uri = Uri.tryParse(resolvedUrl);
+    if (resolvedUrl.isEmpty) {
       state = state.copyWith(error: 'Enter a URL', clearResponse: true);
       return;
     }
-
     if (uri == null ||
         !uri.hasScheme ||
         !uri.hasAuthority ||
@@ -85,8 +86,9 @@ class RequestController extends Notifier<RequestState> {
       );
       return;
     }
-
-    final requestBody = body == null || body.isEmpty ? null : body;
+    final requestBody = resolvedBody == null || resolvedBody.isEmpty
+        ? null
+        : resolvedBody;
     if (validateJsonBody && requestBody != null) {
       try {
         jsonDecode(requestBody);
@@ -98,27 +100,23 @@ class RequestController extends Notifier<RequestState> {
         return;
       }
     }
-
     final request = HttpRequest(
       method: state.method,
-      url: trimmedUrl,
-      queryParameters: queryParameters,
-      headers: headers,
+      url: resolvedUrl,
+      queryParameters: resolvedQuery,
+      headers: resolvedHeaders,
       body: requestBody,
     );
-
     _cancelToken = CancelToken();
     state = state.copyWith(
       loading: true,
       clearError: true,
       clearResponse: true,
     );
-
     try {
-      final response = await ref.read(httpClientProvider).execute(
-            request,
-            cancelToken: _cancelToken,
-          );
+      final response = await ref
+          .read(httpClientProvider)
+          .execute(request, cancelToken: _cancelToken);
       state = state.copyWith(
         response: response,
         loading: false,
@@ -149,8 +147,9 @@ class RequestController extends Notifier<RequestState> {
   ) async {
     try {
       final now = DateTime.now();
-      final repository =
-          await ref.read(requestHistoryRepositoryProvider.future);
+      final repository = await ref.read(
+        requestHistoryRepositoryProvider.future,
+      );
       await repository.save(
         RequestRecord(
           id: now.microsecondsSinceEpoch.toString(),
@@ -169,7 +168,7 @@ class RequestController extends Notifier<RequestState> {
       );
       ref.invalidate(requestHistoryProvider);
     } on Exception {
-      // History must never turn a successful HTTP request into a failed one.
+      /* History persistence must not fail the request. */
     }
   }
 }
