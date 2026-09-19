@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lurc/screens/request/request_screen.dart';
+import 'package:lurc/theme/lurc_theme.dart';
 
 class LurcApp extends StatelessWidget {
   const new({super.key});
@@ -8,10 +9,10 @@ class LurcApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Lurc',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.black),
-        useMaterial3: true,
-      ),
+      debugShowCheckedModeBanner: false,
+      theme: LurcTheme.light(),
+      darkTheme: LurcTheme.dark(),
+      themeMode: ThemeMode.system,
       home: const RequestScreen(),
     );
   }
