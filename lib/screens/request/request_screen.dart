@@ -457,7 +457,6 @@ class _WorkspaceDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => NavigationDrawer(
-    selectedIndex: 0,
     onDestinationSelected: (index) {
       Navigator.pop(context);
       if (index == 1) onCollections();
@@ -541,3 +540,4 @@ class _WorkspaceDrawer extends StatelessWidget {
       ),
     ],
   );
+}
