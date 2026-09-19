@@ -16,6 +16,24 @@ class SavedRequestsState {
         throw const FormatException('Invalid or duplicate collection');
       }
     }
+    for (final collection in collections) {
+      if (collection.parentId == collection.id ||
+          (collection.parentId != null &&
+              !collectionIds.contains(collection.parentId))) {
+        throw const FormatException('Invalid collection parent');
+      }
+      final seen = <String>{collection.id};
+      var parentId = collection.parentId;
+      while (parentId != null) {
+        if (!seen.add(parentId)) {
+          throw const FormatException('Collection hierarchy contains a cycle');
+        }
+        final parent = collections.firstWhere(
+          (value) => value.id == parentId,
+        );
+        parentId = parent.parentId;
+      }
+    }
     final requestIds = <String>{};
     for (final request in requests) {
       if (request.id.trim().isEmpty ||
@@ -50,11 +68,14 @@ class SavedRequestsState {
   final List<Collection> collections;
   final List<SavedRequest> requests;
 
-  /// A null collection ID selects unfiled requests.
   List<SavedRequest> requestsInCollection(String? collectionId) =>
       List.unmodifiable(
         requests.where((request) => request.collectionId == collectionId),
       );
+
+  List<Collection> childCollections(String? parentId) => List.unmodifiable(
+    collections.where((collection) => collection.parentId == parentId),
+  );
 
   Map<String, dynamic> toJson() => {
     'version': 1,
