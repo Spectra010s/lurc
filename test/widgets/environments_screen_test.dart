@@ -15,16 +15,19 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('No environments yet'), findsOneWidget);
-    await tester.tap(find.text('Environment'));
+    await tester.tap(find.byTooltip('New environment'));
     await tester.pumpAndSettle();
+    expect(find.text('New environment'), findsOneWidget);
     await tester.enterText(find.byType(TextField).at(0), 'Development');
     await tester.enterText(find.byType(TextField).at(1), 'host');
     await tester.enterText(find.byType(TextField).at(2), 'https://example.com');
-    await tester.tap(find.byTooltip('Mark as secret'));
+    await tester.tap(find.byTooltip('Hide value'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
     expect(find.text('Development'), findsOneWidget);
-    expect(find.text('1 variable • Active'), findsOneWidget);
+    expect(find.text('1 variable'), findsOneWidget);
+    expect(find.byIcon(Icons.check_circle), findsOneWidget);
 
     final container = ProviderScope.containerOf(
       tester.element(find.byType(EnvironmentsScreen)),
@@ -46,6 +49,7 @@ void main() {
     );
     expect(secretField.obscureText, isTrue);
     await tester.enterText(find.byType(TextField).at(0), 'Production');
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
     expect(find.text('Production'), findsOneWidget);
@@ -54,6 +58,8 @@ void main() {
     await tester.tap(find.byType(PopupMenuButton<String>));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
     await tester.pumpAndSettle();
     expect(find.text('No environments yet'), findsOneWidget);
     expect(container.read(activeEnvironmentIdProvider), isNull);
