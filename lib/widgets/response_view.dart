@@ -109,16 +109,23 @@ class ResponseView extends StatelessWidget {
           Expanded(
             child: TabBarView(
               children: [
-                SingleChildScrollView(
-                  padding: const EdgeInsets.all(LurcSpacing.lg),
-                  child: SelectableText(
-                    currentResponse.body.isEmpty
-                        ? 'Empty response body'
-                        : _formattedBody(currentResponse.body),
-                    style: Theme.of(context).textTheme.bodyMedium
-                        ?.copyWith(fontFamily: 'monospace', height: 1.5),
-                  ),
-                ),
+                currentResponse.body.isEmpty
+                    ? const _ResponseState(
+                        icon: Icons.inbox_outlined,
+                        title: 'Empty response body',
+                        message: 'The server returned a response with no body.',
+                      )
+                    : SingleChildScrollView(
+                        padding: const EdgeInsets.all(LurcSpacing.lg),
+                        child: SelectableText(
+                          _formattedBody(currentResponse.body),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                fontFamily: 'monospace',
+                                height: 1.5,
+                              ),
+                        ),
+                      ),
                 currentResponse.headers.isEmpty
                     ? const _ResponseState(
                         icon: Icons.notes_rounded,
