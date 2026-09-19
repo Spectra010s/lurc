@@ -265,6 +265,8 @@ class _RequestSectionTabs extends StatelessWidget {
     child: const TabBar(
       isScrollable: true,
       tabAlignment: TabAlignment.start,
+      dividerHeight: 1,
+      labelPadding: EdgeInsets.symmetric(horizontal: LurcSpacing.lg),
       tabs: [
         Tab(text: 'Params'),
         Tab(text: 'Headers'),
