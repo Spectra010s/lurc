@@ -17,6 +17,7 @@ import 'package:lurc/screens/settings/settings_screen.dart';
 import 'package:lurc/theme/lurc_theme.dart';
 import 'package:lurc/theme/theme_mode_controller.dart';
 import 'package:lurc/widgets/key_value_editor.dart';
+import 'package:lurc/widgets/lurc_mark.dart';
 import 'package:lurc/widgets/request_bar.dart';
 import 'package:lurc/widgets/request_editor.dart';
 import 'package:lurc/widgets/request_workspace.dart';
@@ -532,11 +533,17 @@ class _WorkspaceDrawer extends StatelessWidget {
           LurcSpacing.lg,
           LurcSpacing.sm,
         ),
-        child: Text(
-          'Lurc',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+        child: Row(
+          children: [
+            const LurcMark(size: 32),
+            const SizedBox(width: LurcSpacing.md),
+            Text(
+              'Lurc',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ),
       Padding(
