@@ -81,7 +81,7 @@ class _RequestWorkspaceState extends State<RequestWorkspace> {
                       LurcSpacing.lg,
                       0,
                       LurcSpacing.lg,
-                      LurcSpacing.md,
+                      LurcSpacing.sm,
                     ),
                     child: SizedBox(
                       width: double.infinity,
@@ -114,7 +114,6 @@ class _RequestWorkspaceState extends State<RequestWorkspace> {
                       ),
                     ),
                   ),
-                  const Divider(),
                   Expanded(
                     // Both panels stay mounted so tabs, drafts, and scroll
                     // positions survive switching between request and response.
@@ -142,9 +141,14 @@ class _RequestWorkspaceState extends State<RequestWorkspace> {
           LurcSpacing.lg,
           LurcSpacing.sm,
           LurcSpacing.lg,
-          LurcSpacing.md,
+          LurcSpacing.sm,
         ),
-        child: Text(title, style: Theme.of(context).textTheme.titleSmall),
+        child: Text(
+          title,
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
       const Divider(height: 1),
       Expanded(child: child),
