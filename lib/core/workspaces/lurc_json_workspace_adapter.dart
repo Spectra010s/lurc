@@ -16,13 +16,14 @@ class LurcJsonWorkspaceAdapter implements WorkspaceAdapter {
   Directory _directory(String rootPath) => Directory(
     rootPath.endsWith('.lurc')
         ? rootPath
-        : rootPath + Platform.pathSeparator + '.lurc',
+        : '$rootPath${Platform.pathSeparator}.lurc',
   );
 
   @override
   Future<bool> canOpen(String rootPath) =>
-      File(_directory(rootPath).path + Platform.pathSeparator + 'workspace.json')
-          .exists();
+      File(
+        '${_directory(rootPath).path}${Platform.pathSeparator}workspace.json',
+      ).existsSync();
 
   @override
   Future<LurcWorkspace> read(String rootPath) async {
@@ -40,7 +41,11 @@ class LurcJsonWorkspaceAdapter implements WorkspaceAdapter {
           .map(SavedRequest.fromJson)
           .toList(growable: false),
       environments: (await _readList(directory, 'environments.json'))
-          .map((value) => Environment.fromJson(Map<String, Object?>.from(value)))
+          .map(
+            (value) => Environment.fromJson(
+              Map<String, Object?>.from(value),
+            ),
+          )
           .toList(growable: false),
     );
   }
@@ -76,10 +81,10 @@ class LurcJsonWorkspaceAdapter implements WorkspaceAdapter {
     String name,
   ) async {
     final decoded = jsonDecode(
-      await File(directory.path + Platform.pathSeparator + name).readAsString(),
+      File('${directory.path}${Platform.pathSeparator}$name').readAsStringSync(),
     );
     if (decoded is! Map<String, dynamic>) {
-      throw WorkspaceFormatException(name + ' must contain a JSON object');
+      throw WorkspaceFormatException('$name must contain a JSON object');
     }
     return decoded;
   }
@@ -88,15 +93,15 @@ class LurcJsonWorkspaceAdapter implements WorkspaceAdapter {
     Directory directory,
     String name,
   ) async {
-    final file = File(directory.path + Platform.pathSeparator + name);
-    if (!await file.exists()) return const [];
-    final decoded = jsonDecode(await file.readAsString());
+    final file = File('${directory.path}${Platform.pathSeparator}$name');
+    if (!file.existsSync()) return const [];
+    final decoded = jsonDecode(file.readAsStringSync());
     if (decoded is! List) {
-      throw WorkspaceFormatException(name + ' must contain a JSON array');
+      throw WorkspaceFormatException('$name must contain a JSON array');
     }
     return decoded.map((value) {
       if (value is! Map<String, dynamic>) {
-        throw WorkspaceFormatException(name + ' contains an invalid record');
+        throw WorkspaceFormatException('$name contains an invalid record');
       }
       return value;
     }).toList(growable: false);
@@ -108,7 +113,7 @@ class LurcJsonWorkspaceAdapter implements WorkspaceAdapter {
     Object value,
   ) {
     final content = const JsonEncoder.withIndent('  ').convert(value);
-    return File(directory.path + Platform.pathSeparator + name)
-        .writeAsString(content + '\n');
+    return File('${directory.path}${Platform.pathSeparator}$name')
+        .writeAsString('$content\\n');
   }
 }

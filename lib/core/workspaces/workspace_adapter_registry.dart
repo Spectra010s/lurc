@@ -17,6 +17,6 @@ class WorkspaceAdapterRegistry {
     if (adapter == null) {
       throw const WorkspaceFormatException('Unsupported workspace format');
     }
-    return adapter.read(rootPath);
+    return await adapter.read(rootPath);
   }
 }

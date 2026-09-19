@@ -8,7 +8,7 @@ abstract interface class WorkspaceAdapter {
 }
 
 class WorkspaceFormatException implements Exception {
-  const WorkspaceFormatException(this.message);
+  const new(this.message);
   final String message;
 
   @override
