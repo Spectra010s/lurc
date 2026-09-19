@@ -506,6 +506,8 @@ class _NameDialogState extends State<_NameDialog> {
         decoration: const InputDecoration(labelText: 'Name'),
         validator: (value) =>
             value == null || value.trim().isEmpty ? 'Enter a name' : null,
+        textInputAction: TextInputAction.done,
+        onChanged: (_) => setState(() {}),
         onFieldSubmitted: (_) => _submit(),
       ),
     ),
@@ -514,7 +516,10 @@ class _NameDialogState extends State<_NameDialog> {
         onPressed: () => Navigator.pop(context),
         child: const Text('Cancel'),
       ),
-      FilledButton(onPressed: _submit, child: Text(widget.action)),
+      FilledButton(
+        onPressed: _name.text.trim().isEmpty ? null : _submit,
+        child: Text(widget.action),
+      ),
     ],
   );
 }
