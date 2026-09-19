@@ -8,11 +8,14 @@ import 'package:lurc/core/http/request_record.dart';
 import 'package:lurc/core/saved_requests/collection.dart';
 import 'package:lurc/core/saved_requests/saved_request.dart';
 import 'package:lurc/core/saved_requests/saved_requests_controller.dart';
+import 'package:lurc/screens/about/about_screen.dart';
 import 'package:lurc/screens/collections/collections_screen.dart';
 import 'package:lurc/screens/environments/environments_screen.dart';
 import 'package:lurc/screens/history/history_screen.dart';
 import 'package:lurc/screens/request/request_controller.dart';
+import 'package:lurc/screens/settings/settings_screen.dart';
 import 'package:lurc/theme/lurc_theme.dart';
+import 'package:lurc/theme/theme_mode_controller.dart';
 import 'package:lurc/widgets/key_value_editor.dart';
 import 'package:lurc/widgets/request_bar.dart';
 import 'package:lurc/widgets/request_editor.dart';
@@ -20,7 +23,9 @@ import 'package:lurc/widgets/request_workspace.dart';
 import 'package:lurc/widgets/response_view.dart';
 
 class RequestScreen extends ConsumerStatefulWidget {
-  const new({super.key});
+  const new({required this.themeController, super.key});
+
+  final ThemeModeController? themeController;
 
   @override
   ConsumerState<RequestScreen> createState() => _RequestScreenState();
@@ -117,6 +122,22 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
     );
   }
 
+  Future<void> _openSettings() async {
+    final controller = widget.themeController;
+    if (controller == null) return;
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => SettingsScreen(themeController: controller),
+      ),
+    );
+  }
+
+  Future<void> _openAbout() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(builder: (_) => const AboutScreen()),
+    );
+  }
+
   Future<void> _saveRequest(HttpMethod method) async {
     final library = await ref.read(savedRequestsControllerProvider.future);
     if (!mounted) return;
@@ -185,6 +206,9 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
         onHistory: _openHistory,
         onCollections: _openCollections,
         onEnvironments: _openEnvironments,
+        onSettings: _openSettings,
+        onAbout: _openAbout,
+        settingsEnabled: widget.themeController != null,
       ),
       body: SafeArea(
         top: false,
@@ -476,12 +500,18 @@ class _WorkspaceDrawer extends StatelessWidget {
     required this.onHistory,
     required this.onCollections,
     required this.onEnvironments,
+    required this.onSettings,
+    required this.onAbout,
+    required this.settingsEnabled,
   });
 
   final Environment? activeEnvironment;
   final VoidCallback onHistory;
   final VoidCallback onCollections;
   final VoidCallback onEnvironments;
+  final VoidCallback onSettings;
+  final VoidCallback onAbout;
+  final bool settingsEnabled;
 
   @override
   Widget build(BuildContext context) => NavigationDrawer(
@@ -490,6 +520,8 @@ class _WorkspaceDrawer extends StatelessWidget {
       if (index == 1) onCollections();
       if (index == 2) onHistory();
       if (index == 3) onEnvironments();
+      if (index == 4 && settingsEnabled) onSettings();
+      if (index == 5) onAbout();
     },
     children: [
       Padding(
@@ -558,9 +590,10 @@ class _WorkspaceDrawer extends StatelessWidget {
         icon: Icon(Icons.tune_outlined),
         label: Text('Environments'),
       ),
-      const NavigationDrawerDestination(
-        icon: Icon(Icons.settings_outlined),
-        label: Text('Settings'),
+      NavigationDrawerDestination(
+        enabled: settingsEnabled,
+        icon: const Icon(Icons.settings_outlined),
+        label: const Text('Settings'),
       ),
       const NavigationDrawerDestination(
         icon: Icon(Icons.info_outline),
