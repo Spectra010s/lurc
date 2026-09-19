@@ -274,6 +274,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
             response: request.response,
             error: request.error,
             loading: request.loading,
+            onRetry: _sendRequest,
           ),
         ),
       ),
