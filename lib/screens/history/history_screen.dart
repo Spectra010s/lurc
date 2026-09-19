@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lurc/core/http/request.dart';
 import 'package:lurc/core/http/request_record.dart';
 import 'package:lurc/screens/history/history_controller.dart';
+import 'package:lurc/theme/lurc_theme.dart';
 
 class HistoryScreen extends ConsumerStatefulWidget {
   const new({super.key});
@@ -48,7 +49,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
         ),
         data: (records) {
           if (records.isEmpty) {
-            return const Center(child: Text('No requests yet.'));
+            return const _HistoryState(
+              icon: Icons.history_rounded,
+              title: 'No request history',
+              message: 'Requests you send will appear here for quick reuse.',
+            );
           }
           final query = _searchController.text.trim().toLowerCase();
           final filtered = records.where((record) {
@@ -62,7 +67,12 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
           return Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+                padding: const EdgeInsets.fromLTRB(
+                  LurcSpacing.lg,
+                  LurcSpacing.sm,
+                  LurcSpacing.lg,
+                  LurcSpacing.xs,
+                ),
                 child: SearchBar(
                   controller: _searchController,
                   hintText: 'Search URL',
@@ -87,8 +97,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
+                    horizontal: LurcSpacing.lg,
+                    vertical: LurcSpacing.sm,
                   ),
                   children: [
                     ChoiceChip(
@@ -96,7 +106,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                       selected: _method == null,
                       onSelected: (_) => setState(() => _method = null),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: LurcSpacing.sm),
                     for (final method in HttpMethod.values) ...[
                       ChoiceChip(
                         label: Text(method.name.toUpperCase()),
@@ -110,7 +120,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
               ),
               Expanded(
                 child: filtered.isEmpty
-                    ? const Center(child: Text('No matching requests.'))
+                    ? const _HistoryState(
+                        icon: Icons.search_off_rounded,
+                        title: 'No matches',
+                        message: 'Try another URL or request method.',
+                      )
                     : ListView.separated(
                         itemCount: filtered.length,
                         separatorBuilder: (_, _) => const Divider(height: 1),
@@ -197,4 +211,44 @@ class _HistoryTile extends ConsumerWidget {
     final minute = local.minute.toString().padLeft(2, '0');
     return '${local.month}/${local.day} $hour:$minute';
   }
+}
+
+
+class _HistoryState extends StatelessWidget {
+  const new({
+    required this.icon,
+    required this.title,
+    required this.message,
+  });
+
+  final IconData icon;
+  final String title;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(LurcSpacing.xxl),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 44,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(height: LurcSpacing.md),
+          Text(title, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: LurcSpacing.sm),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
