@@ -55,7 +55,6 @@ abstract final class LurcTheme {
             secondaryContainer: Color(0xFFDDE5F0),
             onSecondaryContainer: LurcColors.navy,
             error: Color(0xFFB42318),
-            onError: Color(0xFFFFFFFF),
             surface: Color(0xFFF7F9FC),
             onSurface: LurcColors.navy,
             surfaceContainerLowest: Color(0xFFFFFFFF),
