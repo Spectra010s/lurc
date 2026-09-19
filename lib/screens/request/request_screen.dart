@@ -207,15 +207,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
                     environment: activeEnvironment,
                     onClear: () => environmentController.selectedId = null,
                   ),
-                const TabBar(
-                  isScrollable: true,
-                  tabAlignment: TabAlignment.start,
-                  tabs: [
-                    Tab(text: 'Params'),
-                    Tab(text: 'Headers'),
-                    Tab(text: 'Body'),
-                  ],
-                ),
+                const _RequestSectionTabs(),
                 Expanded(
                   child: TabBarView(
                     children: [
@@ -261,6 +253,24 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
       ),
     );
   }
+}
+
+class _RequestSectionTabs extends StatelessWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Theme.of(context).colorScheme.surface,
+    child: const TabBar(
+      isScrollable: true,
+      tabAlignment: TabAlignment.start,
+      tabs: [
+        Tab(text: 'Params'),
+        Tab(text: 'Headers'),
+        Tab(text: 'Body'),
+      ],
+    ),
+  );
 }
 
 class _EnvironmentMenu extends StatelessWidget {
