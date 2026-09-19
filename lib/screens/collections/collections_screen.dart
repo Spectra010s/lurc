@@ -261,8 +261,10 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
   ) => ExpansionTile(
     key: PageStorageKey('collection-${collection.id}'),
     initiallyExpanded: true,
+    dense: true,
+    tilePadding: const EdgeInsets.symmetric(horizontal: LurcSpacing.sm),
     controlAffinity: ListTileControlAffinity.leading,
-    childrenPadding: const EdgeInsets.only(left: LurcSpacing.lg),
+    childrenPadding: const EdgeInsets.only(left: LurcSpacing.md),
     title: Row(
       children: [
         const Icon(Icons.folder_outlined, size: 20),
@@ -270,7 +272,7 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
         Expanded(child: Text(collection.name)),
       ],
     ),
-    subtitle: Text(_requestCount(requests.length)),
+    subtitle: requests.isEmpty ? null : Text(_requestCount(requests.length)),
     trailing: PopupMenuButton<_CollectionAction>(
       tooltip: 'Actions for ${collection.name}',
       enabled: !_busy,
@@ -334,12 +336,19 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
 
   Widget _requestTile(SavedRequest request) => ListTile(
     key: ValueKey('request-${request.id}'),
+    dense: true,
+    contentPadding: const EdgeInsets.only(
+      left: LurcSpacing.sm,
+      right: LurcSpacing.xs,
+    ),
     onTap: () => Navigator.pop(context, request),
     leading: SizedBox(
       width: 48,
       child: Text(
         request.method.name.toUpperCase(),
-        style: Theme.of(context).textTheme.labelMedium,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          fontWeight: FontWeight.w700,
+        ),
       ),
     ),
     title: Text(request.name),
@@ -369,10 +378,10 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
     final library = ref.watch(savedRequestsControllerProvider);
     return Scaffold(
       appBar: AppBar(title: const Text('Collections')),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton.small(
         onPressed: _busy ? null : _createCollection,
-        icon: const Icon(Icons.create_new_folder_outlined),
-        label: const Text('Collection'),
+        tooltip: 'New collection',
+        child: const Icon(Icons.create_new_folder_outlined),
       ),
       body: SafeArea(
         child: Column(
