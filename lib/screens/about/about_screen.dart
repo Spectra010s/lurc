@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lurc/theme/lurc_theme.dart';
+import 'package:lurc/widgets/lurc_mark.dart';
 
 class AboutScreen extends StatelessWidget {
   const new({super.key});
@@ -10,11 +11,7 @@ class AboutScreen extends StatelessWidget {
     body: ListView(
       padding: const EdgeInsets.all(LurcSpacing.xl),
       children: [
-        Icon(
-          Icons.api_rounded,
-          size: 56,
-          color: Theme.of(context).colorScheme.primary,
-        ),
+        const Center(child: LurcMark(size: 72)),
         const SizedBox(height: LurcSpacing.lg),
         Text(
           'Lurc',
