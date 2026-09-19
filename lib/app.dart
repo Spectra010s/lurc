@@ -9,7 +9,6 @@ class LurcApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Lurc',
-      debugShowCheckedModeBanner: false,
       theme: LurcTheme.light(),
       darkTheme: LurcTheme.dark(),
       themeMode: ThemeMode.system,
