@@ -117,6 +117,6 @@ class LurcJsonWorkspaceAdapter implements WorkspaceAdapter {
   ) {
     final content = const JsonEncoder.withIndent('  ').convert(value);
     return File('${directory.path}${Platform.pathSeparator}$name')
-        .writeAsString('$content\\n');
+        .writeAsString('$content\n');
   }
 }
