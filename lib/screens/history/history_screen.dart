@@ -41,11 +41,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
       ),
       body: history.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text('Could not load request history.\n$error'),
-          ),
+        error: (error, _) => _HistoryError(
+          onRetry: () => ref.invalidate(requestHistoryProvider),
         ),
         data: (records) {
           if (records.isEmpty) {
@@ -282,6 +279,49 @@ class _HistoryState extends StatelessWidget {
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+
+class _HistoryError extends StatelessWidget {
+  const _HistoryError({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(LurcSpacing.xxl),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.error_outline_rounded,
+            size: 44,
+            color: Theme.of(context).colorScheme.error,
+          ),
+          const SizedBox(height: LurcSpacing.md),
+          Text(
+            'Could not load history',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: LurcSpacing.sm),
+          Text(
+            'Your local request history could not be opened.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: LurcSpacing.lg),
+          OutlinedButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Retry'),
           ),
         ],
       ),
