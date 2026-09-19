@@ -300,7 +300,8 @@ class _EnvironmentError extends StatelessWidget {
           ),
           const SizedBox(height: LurcSpacing.sm),
           Text(
-            'Your environments are still on this device. Try loading them again.',
+            'Your environments are still on this device. '
+            'Try loading them again.',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
