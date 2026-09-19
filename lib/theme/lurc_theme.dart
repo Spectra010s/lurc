@@ -14,10 +14,55 @@ abstract final class LurcTheme {
   static ThemeData dark() => _theme(Brightness.dark);
 
   static ThemeData _theme(Brightness brightness) {
-    final scheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF4B5563),
-      brightness: brightness,
-    );
+    final scheme = brightness == Brightness.dark
+        ? const ColorScheme.dark(
+            primary: Color(0xFFF5F5F5),
+            onPrimary: Color(0xFF111111),
+            primaryContainer: Color(0xFF2A2A2A),
+            onPrimaryContainer: Color(0xFFF5F5F5),
+            secondary: Color(0xFFD4D4D4),
+            onSecondary: Color(0xFF171717),
+            secondaryContainer: Color(0xFF262626),
+            onSecondaryContainer: Color(0xFFE5E5E5),
+            error: Color(0xFFFF6B6B),
+            onError: Color(0xFF1A0000),
+            surface: Color(0xFF0D0D0D),
+            onSurface: Color(0xFFF5F5F5),
+            surfaceContainerLowest: Color(0xFF111111),
+            surfaceContainerLow: Color(0xFF151515),
+            surfaceContainer: Color(0xFF1A1A1A),
+            surfaceContainerHigh: Color(0xFF202020),
+            surfaceContainerHighest: Color(0xFF262626),
+            onSurfaceVariant: Color(0xFFA3A3A3),
+            outline: Color(0xFF525252),
+            outlineVariant: Color(0xFF2B2B2B),
+            inverseSurface: Color(0xFFF5F5F5),
+            onInverseSurface: Color(0xFF171717),
+          )
+        : const ColorScheme.light(
+            primary: Color(0xFF171717),
+            onPrimary: Color(0xFFFFFFFF),
+            primaryContainer: Color(0xFFE8E8E8),
+            onPrimaryContainer: Color(0xFF171717),
+            secondary: Color(0xFF525252),
+            onSecondary: Color(0xFFFFFFFF),
+            secondaryContainer: Color(0xFFEDEDED),
+            onSecondaryContainer: Color(0xFF262626),
+            error: Color(0xFFB42318),
+            onError: Color(0xFFFFFFFF),
+            surface: Color(0xFFF7F7F7),
+            onSurface: Color(0xFF171717),
+            surfaceContainerLowest: Color(0xFFFFFFFF),
+            surfaceContainerLow: Color(0xFFF2F2F2),
+            surfaceContainer: Color(0xFFEDEDED),
+            surfaceContainerHigh: Color(0xFFE7E7E7),
+            surfaceContainerHighest: Color(0xFFE0E0E0),
+            onSurfaceVariant: Color(0xFF666666),
+            outline: Color(0xFF8A8A8A),
+            outlineVariant: Color(0xFFE2E2E2),
+            inverseSurface: Color(0xFF202020),
+            onInverseSurface: Color(0xFFF5F5F5),
+          );
     final base = ThemeData(
       colorScheme: scheme,
       useMaterial3: true,
