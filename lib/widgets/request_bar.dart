@@ -58,7 +58,10 @@ class RequestBar extends StatelessWidget {
                 .toList(growable: false),
           ),
         );
-        final urlField = TextField(
+        final urlField = Semantics(
+          textField: true,
+          label: 'Request URL',
+          child: TextField(
           controller: controller,
           enabled: !loading,
           keyboardType: TextInputType.url,
@@ -72,6 +75,7 @@ class RequestBar extends StatelessWidget {
             hintText: 'https://api.example.com/endpoint',
             isDense: true,
           ),
+        ),
         );
         final action = SizedBox(
           height: 48,
@@ -87,7 +91,10 @@ class RequestBar extends StatelessWidget {
                   label: const Text('Send'),
                 ),
         );
-        final compactAction = SizedBox(
+        final compactAction = Semantics(
+          button: true,
+          label: loading ? 'Cancel request' : 'Send request',
+          child: SizedBox(
           width: 52,
           height: 48,
           child: loading
@@ -101,6 +108,7 @@ class RequestBar extends StatelessWidget {
                   onPressed: onSend,
                   icon: const Icon(Icons.send_rounded),
                 ),
+          ),
         );
 
         if (compact) {
