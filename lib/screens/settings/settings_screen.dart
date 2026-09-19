@@ -28,6 +28,11 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
         ),
+        const ListTile(
+          leading: Icon(Icons.palette_outlined),
+          title: Text('Theme'),
+          subtitle: Text('Choose how Lurc appears on this device.'),
+        ),
         RadioGroup<ThemeMode>(
           groupValue: themeController.mode,
           onChanged: (mode) {
@@ -36,15 +41,18 @@ class SettingsScreen extends StatelessWidget {
           child: const Column(
             children: [
               RadioListTile(
+                secondary: Icon(Icons.brightness_auto_outlined),
                 value: ThemeMode.system,
                 title: Text('System default'),
                 subtitle: Text('Follow your Android theme'),
               ),
               RadioListTile(
+                secondary: Icon(Icons.light_mode_outlined),
                 value: ThemeMode.light,
                 title: Text('Light'),
               ),
               RadioListTile(
+                secondary: Icon(Icons.dark_mode_outlined),
                 value: ThemeMode.dark,
                 title: Text('Dark'),
               ),
