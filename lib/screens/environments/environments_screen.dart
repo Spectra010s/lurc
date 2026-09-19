@@ -27,10 +27,10 @@ class EnvironmentsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Environments')),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton.small(
         onPressed: () => _editEnvironment(context, ref),
-        icon: const Icon(Icons.add),
-        label: const Text('Environment'),
+        tooltip: 'New environment',
+        child: const Icon(Icons.add),
       ),
       body: environments.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -50,12 +50,12 @@ class EnvironmentsScreen extends ConsumerWidget {
             itemBuilder: (context, index) {
               final environment = items[index];
               final active = environment.id == activeId;
-              return Card(
-                child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: LurcSpacing.md,
-                    vertical: LurcSpacing.xs,
-                  ),
+              return ListTile(
+                dense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: LurcSpacing.lg,
+                  vertical: LurcSpacing.xs,
+                ),
                 leading: Icon(
                   active ? Icons.radio_button_checked : Icons.radio_button_off,
                 ),
@@ -84,7 +84,6 @@ class EnvironmentsScreen extends ConsumerWidget {
                     PopupMenuItem(value: 'edit', child: Text('Edit')),
                     PopupMenuItem(value: 'delete', child: Text('Delete')),
                   ],
-                ),
                 ),
               );
             },
