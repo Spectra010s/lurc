@@ -4,6 +4,7 @@ import 'package:lurc/core/http/request_body_type.dart';
 import 'package:lurc/core/saved_requests/collection.dart';
 import 'package:lurc/core/saved_requests/saved_request.dart';
 import 'package:lurc/core/saved_requests/saved_requests_repository.dart';
+import 'package:lurc/core/saved_requests/saved_requests_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -160,7 +161,9 @@ void main() {
     },
   );
 
-  test('nested folders persist and deleting a parent reparents children', () async {
+  test(
+    'nested folders persist and deleting a parent reparents children',
+    () async {
     await repository.saveCollection(const Collection(id: 'root', name: 'API'));
     await repository.saveCollection(
       const Collection(id: 'child', name: 'Auth', parentId: 'root'),
@@ -171,8 +174,9 @@ void main() {
     await repository.deleteCollection('root');
     state = await repository.load();
     expect(state.collections.single.id, 'child');
-    expect(state.collections.single.parentId, isNull);
-  });
+      expect(state.collections.single.parentId, isNull);
+    },
+  );
 
   test('collection hierarchy rejects cycles', () {
     expect(

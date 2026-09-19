@@ -175,7 +175,9 @@ void main() {
     });
   }
 
-  test('repository migrates legacy variables and persists secret metadata', () async {
+  test(
+    'repository migrates legacy variables and persists secret metadata',
+    () async {
     SharedPreferences.setMockInitialValues({
       'environments_v1':
           '[{"id":"legacy","name":"Legacy","variables":{"token":"abc"}}]',
@@ -194,8 +196,9 @@ void main() {
       ),
     );
     final restored = (await repository.load()).single;
-    expect(restored.variables.single.secret, isTrue);
-  });
+      expect(restored.variables.single.secret, isTrue);
+    },
+  );
 
   test('concurrent repository writes retain every environment', () async {
     final preferences = await SharedPreferences.getInstance();
