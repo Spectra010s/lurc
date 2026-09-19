@@ -18,13 +18,20 @@ class _LurcAppState extends State<LurcApp> {
     super.initState();
     ThemeModeController.load().then((controller) {
       if (!mounted) return;
+      controller.addListener(_handleThemeChanged);
       setState(() => _themeController = controller);
     });
   }
 
+  void _handleThemeChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
-    _themeController?.dispose();
+    _themeController
+      ?..removeListener(_handleThemeChanged)
+      ..dispose();
     super.dispose();
   }
 
