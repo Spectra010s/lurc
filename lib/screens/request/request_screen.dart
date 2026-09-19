@@ -12,6 +12,7 @@ import 'package:lurc/screens/collections/collections_screen.dart';
 import 'package:lurc/screens/environments/environments_screen.dart';
 import 'package:lurc/screens/history/history_screen.dart';
 import 'package:lurc/screens/request/request_controller.dart';
+import 'package:lurc/theme/lurc_theme.dart';
 import 'package:lurc/widgets/key_value_editor.dart';
 import 'package:lurc/widgets/request_bar.dart';
 import 'package:lurc/widgets/request_editor.dart';
@@ -207,6 +208,8 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
                     onClear: () => environmentController.selectedId = null,
                   ),
                 const TabBar(
+                  isScrollable: true,
+                  tabAlignment: TabAlignment.start,
                   tabs: [
                     Tab(text: 'Params'),
                     Tab(text: 'Headers'),
@@ -217,7 +220,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
                   child: TabBarView(
                     children: [
                       SingleChildScrollView(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(LurcSpacing.lg),
                         child: KeyValueEditor(
                           key: ValueKey('params-$_editorRevision'),
                           label: 'Query parameters',
@@ -226,7 +229,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
                         ),
                       ),
                       SingleChildScrollView(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(LurcSpacing.lg),
                         child: KeyValueEditor(
                           key: ValueKey('headers-$_editorRevision'),
                           label: 'Headers',
@@ -235,7 +238,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
                         ),
                       ),
                       SingleChildScrollView(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(LurcSpacing.lg),
                         child: RequestEditor(
                           controller: _bodyController,
                           mode: _bodyMode,
