@@ -36,10 +36,7 @@ class RequestBar extends StatelessWidget {
           child: DropdownButtonFormField<HttpMethod>(
             initialValue: method,
             isExpanded: true,
-            decoration: const InputDecoration(
-              labelText: 'Method',
-              isDense: true,
-            ),
+            decoration: const InputDecoration(isDense: true),
             onChanged: loading
                 ? null
                 : (value) {
@@ -66,8 +63,7 @@ class RequestBar extends StatelessWidget {
             if (!loading) onSend();
           },
           decoration: const InputDecoration(
-            labelText: 'Request URL',
-            hintText: 'https://api.example.com/users',
+            hintText: 'https://api.example.com/endpoint',
             isDense: true,
           ),
         );
