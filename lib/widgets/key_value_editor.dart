@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lurc/theme/lurc_theme.dart';
 
 class KeyValueEntry {
   const new({
@@ -105,102 +106,114 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                widget.label,
-                style: Theme.of(context).textTheme.titleSmall,
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        children: [
+          Expanded(
+            child: Text(
+              widget.label,
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+          ),
+          TextButton.icon(
+            onPressed: _addRow,
+            icon: const Icon(Icons.add, size: 18),
+            label: const Text('Add'),
+          ),
+        ],
+      ),
+      const SizedBox(height: LurcSpacing.xs),
+      for (var index = 0; index < _rows.length; index++)
+        Padding(
+          padding: const EdgeInsets.only(bottom: LurcSpacing.sm),
+          child: _row(context, index),
+        ),
+    ],
+  );
+
+  Widget _row(BuildContext context, int index) => LayoutBuilder(
+    builder: (context, constraints) {
+      final compact = constraints.maxWidth < 440;
+      final row = _rows[index];
+      final keyField = TextField(
+        controller: row.keyController,
+        autocorrect: false,
+        enableSuggestions: false,
+        textInputAction: TextInputAction.next,
+        onChanged: (_) => _notifyChanged(),
+        decoration: const InputDecoration(hintText: 'Key', isDense: true),
+      );
+      final valueField = TextField(
+        controller: row.valueController,
+        obscureText: widget.allowSecrets && row.secret,
+        autocorrect: false,
+        enableSuggestions: false,
+        textInputAction: TextInputAction.next,
+        onChanged: (_) => _notifyChanged(),
+        onSubmitted: (_) {
+          if (index == _rows.length - 1) _addRow();
+        },
+        decoration: const InputDecoration(hintText: 'Value', isDense: true),
+      );
+      final actions = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Tooltip(
+            message: row.enabled ? 'Disable row' : 'Enable row',
+            child: Checkbox(
+              value: row.enabled,
+              onChanged: (value) => _setEnabled(index, value ?? true),
+              visualDensity: VisualDensity.compact,
+            ),
+          ),
+          if (widget.allowSecrets)
+            IconButton(
+              tooltip: row.secret ? 'Secret value hidden' : 'Mark as secret',
+              onPressed: () => _setSecret(index, !row.secret),
+              icon: Icon(
+                row.secret
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
               ),
             ),
-            TextButton.icon(
-              onPressed: _addRow,
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Add'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        for (var index = 0; index < _rows.length; index++)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          IconButton(
+            tooltip: 'Remove row',
+            onPressed: _rows.length == 1 ? null : () => _removeRow(index),
+            icon: const Icon(Icons.close),
+          ),
+        ],
+      );
+
+      if (compact) {
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(LurcSpacing.sm),
+            child: Column(
               children: [
-                Tooltip(
-                  message: _rows[index].enabled
-                      ? 'Disable row'
-                      : 'Enable row',
-                  child: Checkbox(
-                    value: _rows[index].enabled,
-                    onChanged: (value) => _setEnabled(index, value ?? true),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ),
-                Expanded(
-                  child: TextField(
-                    controller: _rows[index].keyController,
-                    autocorrect: false,
-                    enableSuggestions: false,
-                    textInputAction: TextInputAction.next,
-                    onChanged: (_) => _notifyChanged(),
-                    decoration: const InputDecoration(
-                      hintText: 'Key',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: TextField(
-                    controller: _rows[index].valueController,
-                    obscureText: widget.allowSecrets && _rows[index].secret,
-                    autocorrect: false,
-                    enableSuggestions: false,
-                    textInputAction: TextInputAction.next,
-                    onChanged: (_) => _notifyChanged(),
-                    onSubmitted: (_) {
-                      if (index == _rows.length - 1) _addRow();
-                    },
-                    decoration: const InputDecoration(
-                      hintText: 'Value',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                  ),
-                ),
-                if (widget.allowSecrets)
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    tooltip: _rows[index].secret
-                        ? 'Secret value hidden'
-                        : 'Mark as secret',
-                    onPressed: () => _setSecret(index, !_rows[index].secret),
-                    icon: Icon(
-                      _rows[index].secret
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
-                    ),
-                  ),
-                IconButton(
-                  visualDensity: VisualDensity.compact,
-                  tooltip: 'Remove row',
-                  onPressed: _rows.length == 1
-                      ? null
-                      : () => _removeRow(index),
-                  icon: const Icon(Icons.close),
-                ),
+                keyField,
+                const SizedBox(height: LurcSpacing.sm),
+                valueField,
+                Align(alignment: Alignment.centerRight, child: actions),
               ],
             ),
           ),
-      ],
-    );
-  }
+        );
+      }
+
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: keyField),
+          const SizedBox(width: LurcSpacing.sm),
+          Expanded(child: valueField),
+          actions,
+        ],
+      );
+    },
+  );
+
 }
 
 class _EditorRow {
