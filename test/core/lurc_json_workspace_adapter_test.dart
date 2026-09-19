@@ -44,7 +44,7 @@ void main() {
     await adapter.write(root.path, workspace);
     expect(await adapter.canOpen(root.path), isTrue);
     final raw = await File(
-      root.path + '/.lurc/environments.json',
+      '${root.path}/.lurc/environments.json',
     ).readAsString();
     expect(raw, isNot(contains('do-not-export')));
 

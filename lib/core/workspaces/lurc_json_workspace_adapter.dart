@@ -20,10 +20,11 @@ class LurcJsonWorkspaceAdapter implements WorkspaceAdapter {
   );
 
   @override
-  Future<bool> canOpen(String rootPath) =>
-      File(
-        '${_directory(rootPath).path}${Platform.pathSeparator}workspace.json',
-      ).existsSync();
+  Future<bool> canOpen(String rootPath) => Future.value(
+    File(
+      '${_directory(rootPath).path}${Platform.pathSeparator}workspace.json',
+    ).existsSync(),
+  );
 
   @override
   Future<LurcWorkspace> read(String rootPath) async {
@@ -81,7 +82,9 @@ class LurcJsonWorkspaceAdapter implements WorkspaceAdapter {
     String name,
   ) async {
     final decoded = jsonDecode(
-      File('${directory.path}${Platform.pathSeparator}$name').readAsStringSync(),
+      File(
+        '${directory.path}${Platform.pathSeparator}$name',
+      ).readAsStringSync(),
     );
     if (decoded is! Map<String, dynamic>) {
       throw WorkspaceFormatException('$name must contain a JSON object');

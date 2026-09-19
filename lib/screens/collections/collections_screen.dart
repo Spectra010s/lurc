@@ -117,7 +117,11 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
                 ),
                 for (final candidate in state.collections)
                   if (candidate.id != collection.id &&
-                      !_isDescendant(state.collections, candidate, collection.id))
+                      !_isDescendant(
+                        state.collections,
+                        candidate,
+                        collection.id,
+                      ))
                     ListTile(
                       title: Text(candidate.name),
                       onTap: () => Navigator.pop(
