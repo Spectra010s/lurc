@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lurc/theme/lurc_theme.dart';
 
 /// Keeps editing and inspecting usable without allocating a fixed screen share.
 class RequestWorkspace extends StatefulWidget {
@@ -62,7 +63,7 @@ class _RequestWorkspaceState extends State<RequestWorkspace> {
   Widget _panels({required bool wide}) => Column(
     children: [
       KeyedSubtree(key: _barKey, child: widget.requestBar),
-      const SizedBox(height: 4),
+      const SizedBox(height: LurcSpacing.xs),
       Expanded(
         child: wide
             ? Row(
@@ -76,7 +77,12 @@ class _RequestWorkspaceState extends State<RequestWorkspace> {
             : Column(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    padding: const EdgeInsets.fromLTRB(
+                      LurcSpacing.lg,
+                      0,
+                      LurcSpacing.lg,
+                      LurcSpacing.md,
+                    ),
                     child: SizedBox(
                       width: double.infinity,
                       child: SegmentedButton<bool>(
@@ -84,10 +90,19 @@ class _RequestWorkspaceState extends State<RequestWorkspace> {
                         segments: [
                           const ButtonSegment(
                             value: false,
+                            icon: Icon(Icons.edit_outlined),
                             label: Text('Request'),
                           ),
                           ButtonSegment(
                             value: true,
+                            icon: widget.loading
+                                ? const SizedBox.square(
+                                    dimension: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.data_object_rounded),
                             label: Text(
                               widget.loading ? 'Sending…' : 'Response',
                             ),
@@ -99,7 +114,7 @@ class _RequestWorkspaceState extends State<RequestWorkspace> {
                       ),
                     ),
                   ),
-                  const Divider(height: 1),
+                  const Divider(),
                   Expanded(
                     // Both panels stay mounted so tabs, drafts, and scroll
                     // positions survive switching between request and response.
@@ -123,7 +138,12 @@ class _RequestWorkspaceState extends State<RequestWorkspace> {
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+        padding: const EdgeInsets.fromLTRB(
+          LurcSpacing.lg,
+          LurcSpacing.sm,
+          LurcSpacing.lg,
+          LurcSpacing.md,
+        ),
         child: Text(title, style: Theme.of(context).textTheme.titleSmall),
       ),
       const Divider(height: 1),
