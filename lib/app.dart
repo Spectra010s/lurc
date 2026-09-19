@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:lurc/screens/request/request_screen.dart';
 import 'package:lurc/theme/lurc_theme.dart';
@@ -16,11 +18,13 @@ class _LurcAppState extends State<LurcApp> {
   @override
   void initState() {
     super.initState();
-    ThemeModeController.load().then((controller) {
-      if (!mounted) return;
-      controller.addListener(_handleThemeChanged);
-      setState(() => _themeController = controller);
-    });
+    unawaited(
+      ThemeModeController.load().then((controller) {
+        if (!mounted) return;
+        controller.addListener(_handleThemeChanged);
+        setState(() => _themeController = controller);
+      }),
+    );
   }
 
   void _handleThemeChanged() {
