@@ -81,10 +81,15 @@ void main() {
     await open(tester);
     await action(tester, 'Create user', 'Rename request');
     await tester.enterText(find.byType(TextFormField), '   ');
-    await tester.tap(find.text('Save'));
     await settle(tester);
-    expect(find.text('Enter a name'), findsOneWidget);
+    expect(
+      tester
+          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Save'))
+          .onPressed,
+      isNull,
+    );
     await tester.enterText(find.byType(TextFormField), 'Create account');
+    await settle(tester);
     await tester.tap(find.text('Save'));
     await settle(tester);
     await action(tester, 'Create account', 'Move request');
@@ -136,7 +141,7 @@ void main() {
     await tester.tap(find.text('Delete'));
     await settle(tester);
     expect((await read(tester)).requests, isEmpty);
-    expect(find.text('No saved requests'), findsNWidgets(2));
+    expect(find.text('Empty collection'), findsNWidgets(2));
   });
 
   testWidgets('editor retains payload when only the name changes', (
