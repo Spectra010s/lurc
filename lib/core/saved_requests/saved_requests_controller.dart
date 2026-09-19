@@ -42,10 +42,15 @@ class SavedRequestsController extends AsyncNotifier<SavedRequestsState> {
   Future<void> _write(
     Future<SavedRequestsState> Function(SavedRequestsRepository) operation,
   ) async {
+    final lifecycle = ref;
     await future;
-    final repository = await ref.read(savedRequestsRepositoryProvider.future);
+    if (!lifecycle.mounted) return;
+    final repository = await lifecycle.read(
+      savedRequestsRepositoryProvider.future,
+    );
+    if (!lifecycle.mounted) return;
     final next = await operation(repository);
-    if (ref.mounted) state = AsyncData(next);
+    if (lifecycle.mounted) state = AsyncData(next);
   }
 
   Future<void> saveCollection(Collection collection) =>

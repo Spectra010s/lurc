@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lurc/core/http/request.dart';
+import 'package:lurc/core/http/request_body_type.dart';
 import 'package:lurc/core/saved_requests/collection.dart';
 import 'package:lurc/core/saved_requests/saved_request.dart';
 import 'package:lurc/core/saved_requests/saved_requests_repository.dart';
@@ -124,4 +125,38 @@ void main() {
     await repository.deleteRequest('r');
     expect(preferences.getString('request_history_v1'), 'history');
   });
+
+  test(
+    'rename and move round-trip every payload field without duplication',
+    () async {
+      await repository.saveCollection(const Collection(id: 'a', name: 'First'));
+      await repository.saveCollection(
+        const Collection(id: 'b', name: 'Second'),
+      );
+      final original = SavedRequest(
+        id: 'complete',
+        name: 'Original',
+        method: HttpMethod.patch,
+        url: '{{host}}/users',
+        collectionId: 'a',
+        queryParameters: const {'search': 'two words', 'page': '{{page}}'},
+        headers: const {'Authorization': 'Bearer {{token}}'},
+        body: '{"active":true}',
+        bodyType: RequestBodyType.json,
+      );
+      await repository.saveRequest(original);
+      var updated = original.copyWith(name: 'Renamed', collectionId: 'b');
+      await repository.saveRequest(updated);
+      var restored = await LocalSavedRequestsRepository(preferences).load();
+      expect(restored.requests.single.toJson(), updated.toJson());
+      updated = updated.copyWith(clearCollection: true);
+      await repository.saveRequest(updated);
+      restored = await LocalSavedRequestsRepository(preferences).load();
+      expect(restored.requests.single.toJson(), updated.toJson());
+      expect(restored.requestsInCollection('a'), isEmpty);
+      expect(restored.requestsInCollection('b'), isEmpty);
+      await repository.deleteRequest(updated.id);
+      expect((await repository.load()).collections.length, 2);
+    },
+  );
 }
