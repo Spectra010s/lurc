@@ -70,7 +70,11 @@ class ResponseView extends StatelessWidget {
         children: [
           Semantics(
             container: true,
-            label: 'Response status $statusCode, ${currentResponse.duration.inMilliseconds} milliseconds, ${utf8.encode(currentResponse.body).length} bytes',
+            label:
+                'Response status $statusCode, '
+                '${currentResponse.duration.inMilliseconds} '
+                'milliseconds, '
+                '${utf8.encode(currentResponse.body).length} bytes',
             child: Padding(
             padding: const EdgeInsets.fromLTRB(
               LurcSpacing.lg,
@@ -128,42 +132,47 @@ class ResponseView extends StatelessWidget {
           Expanded(
             child: TabBarView(
               children: [
-                currentResponse.body.isEmpty
-                    ? const _ResponseState(
-                        icon: Icons.inbox_outlined,
-                        title: 'Empty response body',
-                        message: 'The server returned a response with no body.',
-                      )
-                    : SingleChildScrollView(
-                        padding: const EdgeInsets.all(LurcSpacing.lg),
-                        child: SelectableText(
-                          _formattedBody(currentResponse.body),
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                fontFamily: 'monospace',
-                                height: 1.5,
-                              ),
-                        ),
-                      ),
-                currentResponse.headers.isEmpty
-                    ? const _ResponseState(
-                        icon: Icons.notes_rounded,
-                        title: 'No response headers',
-                        message: 'The server returned no headers to inspect.',
-                      )
-                    : ListView(
-                        padding: const EdgeInsets.all(LurcSpacing.lg),
-                        children: currentResponse.headers.entries
-                      .map(
-                        (entry) => Padding(
-                          padding: const EdgeInsets.only(
-                            bottom: LurcSpacing.sm,
+                if (currentResponse.body.isEmpty)
+                  const _ResponseState(
+                    icon: Icons.inbox_outlined,
+                    title: 'Empty response body',
+                    message:
+                        'The server returned a response with no body.',
+                  )
+                else
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.all(LurcSpacing.lg),
+                    child: SelectableText(
+                      _formattedBody(currentResponse.body),
+                      style: Theme.of(context).textTheme.bodyMedium
+                          ?.copyWith(
+                            fontFamily: 'monospace',
+                            height: 1.5,
                           ),
-                          child: SelectableText('${entry.key}: ${entry.value}'),
-                        ),
-                      )
-                      .toList(growable: false),
-                      ),
+                    ),
+                  ),
+                if (currentResponse.headers.isEmpty)
+                  const _ResponseState(
+                    icon: Icons.notes_rounded,
+                    title: 'No response headers',
+                    message: 'The server returned no headers to inspect.',
+                  )
+                else
+                  ListView(
+                    padding: const EdgeInsets.all(LurcSpacing.lg),
+                    children: currentResponse.headers.entries
+                        .map(
+                          (entry) => Padding(
+                            padding: const EdgeInsets.only(
+                              bottom: LurcSpacing.sm,
+                            ),
+                            child: SelectableText(
+                              '${entry.key}: ${entry.value}',
+                            ),
+                          ),
+                        )
+                        .toList(growable: false),
+                  ),
               ],
             ),
           ),
