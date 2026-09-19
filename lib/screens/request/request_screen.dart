@@ -181,6 +181,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
         ],
       ),
       drawer: _WorkspaceDrawer(
+        activeEnvironment: activeEnvironment,
         onHistory: _openHistory,
         onCollections: _openCollections,
         onEnvironments: _openEnvironments,
@@ -443,61 +444,100 @@ class _SaveRequestResult {
 
 class _WorkspaceDrawer extends StatelessWidget {
   const new({
+    required this.activeEnvironment,
     required this.onHistory,
     required this.onCollections,
     required this.onEnvironments,
   });
 
+  final Environment? activeEnvironment;
   final VoidCallback onHistory;
   final VoidCallback onCollections;
   final VoidCallback onEnvironments;
 
   @override
   Widget build(BuildContext context) => NavigationDrawer(
+    selectedIndex: 0,
     onDestinationSelected: (index) {
       Navigator.pop(context);
       if (index == 1) onCollections();
       if (index == 2) onHistory();
       if (index == 3) onEnvironments();
     },
-    children: const [
+    children: [
       Padding(
-        padding: EdgeInsets.fromLTRB(28, 24, 16, 12),
+        padding: const EdgeInsets.fromLTRB(
+          28,
+          LurcSpacing.xl,
+          LurcSpacing.lg,
+          LurcSpacing.sm,
+        ),
         child: Text(
           'Lurc',
-          style: TextStyle(
-            fontSize: 22,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w600,
           ),
         ),
       ),
-      NavigationDrawerDestination(
+      Padding(
+        padding: const EdgeInsets.fromLTRB(
+          28,
+          0,
+          LurcSpacing.lg,
+          LurcSpacing.md,
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () {
+            Navigator.pop(context);
+            onEnvironments();
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: LurcSpacing.sm),
+            child: Row(
+              children: [
+                const Icon(Icons.tune_outlined, size: 18),
+                const SizedBox(width: LurcSpacing.sm),
+                Expanded(
+                  child: Text(
+                    activeEnvironment?.name ?? 'No environment',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const Icon(Icons.chevron_right, size: 18),
+              ],
+            ),
+          ),
+        ),
+      ),
+      const Divider(),
+      const NavigationDrawerDestination(
         icon: Icon(Icons.send_outlined),
         selectedIcon: Icon(Icons.send),
         label: Text('Request'),
       ),
-      NavigationDrawerDestination(
+      const NavigationDrawerDestination(
         icon: Icon(Icons.folder_outlined),
         selectedIcon: Icon(Icons.folder),
         label: Text('Collections'),
       ),
-      NavigationDrawerDestination(
+      const NavigationDrawerDestination(
         icon: Icon(Icons.history),
         label: Text('History'),
       ),
-      Divider(),
-      NavigationDrawerDestination(
+      const Divider(),
+      const NavigationDrawerDestination(
         icon: Icon(Icons.tune_outlined),
         label: Text('Environments'),
       ),
-      NavigationDrawerDestination(
+      const NavigationDrawerDestination(
         icon: Icon(Icons.settings_outlined),
         label: Text('Settings'),
       ),
-      NavigationDrawerDestination(
+      const NavigationDrawerDestination(
         icon: Icon(Icons.info_outline),
         label: Text('About'),
       ),
     ],
   );
-}
