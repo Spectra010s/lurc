@@ -84,28 +84,24 @@ class _RequestWorkspaceState extends State<RequestWorkspace> {
                       LurcSpacing.sm,
                     ),
                     child: SizedBox(
-                      width: double.infinity,
                       child: SegmentedButton<bool>(
                         showSelectedIcon: false,
                         segments: [
                           const ButtonSegment(
                             value: false,
-                            icon: Icon(Icons.edit_outlined),
                             label: Text('Request'),
                           ),
                           ButtonSegment(
                             value: true,
                             icon: widget.loading
                                 ? const SizedBox.square(
-                                    dimension: 16,
+                                    dimension: 14,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
                                     ),
                                   )
-                                : const Icon(Icons.data_object_rounded),
-                            label: Text(
-                              widget.loading ? 'Sending…' : 'Response',
-                            ),
+                                : null,
+                            label: const Text('Response'),
                           ),
                         ],
                         selected: {_showResponse},
