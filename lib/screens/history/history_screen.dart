@@ -75,8 +75,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                 ),
                 child: SearchBar(
                   controller: _searchController,
-                  hintText: 'Search URL',
+                  hintText: 'Search requests',
                   leading: const Icon(Icons.search),
+                  constraints: const BoxConstraints(minHeight: 48),
+                  elevation: const WidgetStatePropertyAll(0),
                   trailing: _searchController.text.isEmpty
                       ? null
                       : [
@@ -127,6 +129,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                       )
                     : ListView.separated(
                         itemCount: filtered.length,
+                        padding: const EdgeInsets.only(
+                          top: LurcSpacing.xs,
+                          bottom: LurcSpacing.lg,
+                        ),
                         separatorBuilder: (_, _) => const Divider(height: 1),
                         itemBuilder: (context, index) =>
                             _HistoryTile(record: filtered[index]),
