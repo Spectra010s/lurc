@@ -84,7 +84,7 @@ class ResponseView extends StatelessWidget {
             child: TabBarView(
               children: [
                 SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(LurcSpacing.lg),
                   child: SelectableText(
                     currentResponse.body.isEmpty
                         ? 'Empty response body'
