@@ -60,14 +60,21 @@ class ResponseView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            padding: const EdgeInsets.fromLTRB(
+              LurcSpacing.lg,
+              LurcSpacing.md,
+              LurcSpacing.lg,
+              LurcSpacing.sm,
+            ),
             child: Wrap(
               spacing: 12,
               runSpacing: 4,
               children: [
                 Text(
-                  'Status ${currentResponse.statusCode}',
-                  style: Theme.of(context).textTheme.titleMedium,
+                  '${currentResponse.statusCode}',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 Text('${currentResponse.duration.inMilliseconds} ms'),
                 Text('${utf8.encode(currentResponse.body).length} bytes'),
@@ -75,6 +82,8 @@ class ResponseView extends StatelessWidget {
             ),
           ),
           const TabBar(
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
             tabs: [
               Tab(text: 'Body'),
               Tab(text: 'Headers'),
@@ -94,11 +103,13 @@ class ResponseView extends StatelessWidget {
                   ),
                 ),
                 ListView(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(LurcSpacing.lg),
                   children: currentResponse.headers.entries
                       .map(
                         (entry) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.only(
+                            bottom: LurcSpacing.sm,
+                          ),
                           child: SelectableText('${entry.key}: ${entry.value}'),
                         ),
                       )
