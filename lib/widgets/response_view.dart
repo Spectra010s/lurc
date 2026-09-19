@@ -93,8 +93,14 @@ class ResponseView extends StatelessWidget {
                     ),
                   ),
                 ),
-                Text('${currentResponse.duration.inMilliseconds} ms'),
-                Text('${utf8.encode(currentResponse.body).length} bytes'),
+                _ResponseMetric(
+                  icon: Icons.schedule_outlined,
+                  value: '${currentResponse.duration.inMilliseconds} ms',
+                ),
+                _ResponseMetric(
+                  icon: Icons.data_object_outlined,
+                  value: '${utf8.encode(currentResponse.body).length} bytes',
+                ),
               ],
             ),
           ),
@@ -156,6 +162,32 @@ class ResponseView extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ResponseMetric extends StatelessWidget {
+  const new({required this.icon, required this.value});
+
+  final IconData icon;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Icon(
+        icon,
+        size: 14,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
+      const SizedBox(width: LurcSpacing.xs),
+      Text(
+        value,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+      ),
+    ],
+  );
 }
 
 class _ResponseState extends StatelessWidget {
