@@ -57,13 +57,20 @@ class EnvironmentsScreen extends ConsumerWidget {
                   vertical: LurcSpacing.xs,
                 ),
                 leading: Icon(
-                  active ? Icons.radio_button_checked : Icons.radio_button_off,
+                  active ? Icons.check_circle : Icons.circle_outlined,
+                  color: active
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
-                title: Text(environment.name),
+                title: Text(
+                  environment.name,
+                  style: active
+                      ? const TextStyle(fontWeight: FontWeight.w600)
+                      : null,
+                ),
                 subtitle: Text(
                   '${environment.variables.length} variable'
-                  '${environment.variables.length == 1 ? '' : 's'}'
-                  '${active ? ' • Active' : ''}',
+                  '${environment.variables.length == 1 ? '' : 's'}',
                 ),
                 onTap: () =>
                     ref.read(activeEnvironmentIdProvider.notifier).selectedId =
