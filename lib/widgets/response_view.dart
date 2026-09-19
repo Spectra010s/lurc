@@ -98,12 +98,16 @@ class ResponseView extends StatelessWidget {
               ],
             ),
           ),
-          const TabBar(
+          TabBar(
             isScrollable: true,
             tabAlignment: TabAlignment.start,
+            dividerHeight: 1,
+            labelPadding: const EdgeInsets.symmetric(
+              horizontal: LurcSpacing.lg,
+            ),
             tabs: [
-              Tab(text: 'Body'),
-              Tab(text: 'Headers'),
+              const Tab(text: 'Body'),
+              Tab(text: 'Headers (${currentResponse.headers.length})'),
             ],
           ),
           Expanded(
