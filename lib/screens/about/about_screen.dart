@@ -25,7 +25,7 @@ class AboutScreen extends StatelessWidget {
         ),
         const SizedBox(height: LurcSpacing.sm),
         Text(
-          'API testing built for Android.',
+          'A native Android API client for building, sending, inspecting, and revisiting HTTP requests directly from your phone.',
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -36,9 +36,9 @@ class AboutScreen extends StatelessWidget {
         const ListTile(
           contentPadding: EdgeInsets.zero,
           leading: Icon(Icons.phone_android_outlined),
-          title: Text('Native mobile workspace'),
+          title: Text('Built for API work on a phone'),
           subtitle: Text(
-            'Build requests, inspect responses, save collections, and switch environments from your phone.',
+            'Build and send HTTP requests, inspect responses, revisit history, and organize reusable requests without leaving Android.',
           ),
         ),
         const ListTile(
@@ -46,7 +46,7 @@ class AboutScreen extends StatelessWidget {
           leading: Icon(Icons.lock_outline),
           title: Text('Local-first'),
           subtitle: Text(
-            'Your request workspace and saved data stay on your device.',
+            'Requests are sent directly from your device. Lurc does not need a remote backend to proxy them.',
           ),
         ),
       ],
