@@ -53,6 +53,10 @@ class ResponseView extends StatelessWidget {
     }
 
     final currentResponse = response!;
+    final statusCode = currentResponse.statusCode;
+    final statusColor = statusCode >= 200 && statusCode < 400
+        ? Theme.of(context).colorScheme.primary
+        : Theme.of(context).colorScheme.error;
 
     return DefaultTabController(
       length: 2,
@@ -70,10 +74,23 @@ class ResponseView extends StatelessWidget {
               spacing: 12,
               runSpacing: 4,
               children: [
-                Text(
-                  '${currentResponse.statusCode}',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: LurcSpacing.sm,
+                      vertical: LurcSpacing.xs,
+                    ),
+                    child: Text(
+                      '$statusCode',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: statusColor,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
                 ),
                 Text('${currentResponse.duration.inMilliseconds} ms'),
@@ -102,9 +119,15 @@ class ResponseView extends StatelessWidget {
                         ?.copyWith(fontFamily: 'monospace', height: 1.5),
                   ),
                 ),
-                ListView(
-                  padding: const EdgeInsets.all(LurcSpacing.lg),
-                  children: currentResponse.headers.entries
+                currentResponse.headers.isEmpty
+                    ? const _ResponseState(
+                        icon: Icons.notes_rounded,
+                        title: 'No response headers',
+                        message: 'The server returned no headers to inspect.',
+                      )
+                    : ListView(
+                        padding: const EdgeInsets.all(LurcSpacing.lg),
+                        children: currentResponse.headers.entries
                       .map(
                         (entry) => Padding(
                           padding: const EdgeInsets.only(
@@ -114,7 +137,7 @@ class ResponseView extends StatelessWidget {
                         ),
                       )
                       .toList(growable: false),
-                ),
+                      ),
               ],
             ),
           ),
@@ -123,7 +146,6 @@ class ResponseView extends StatelessWidget {
     );
   }
 }
-
 
 class _ResponseState extends StatelessWidget {
   const new({
