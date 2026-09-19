@@ -404,7 +404,9 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
               child: library.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (error, _) => _CollectionsError(
-                  onRetry: () => ref.invalidate(savedRequestsControllerProvider),
+                  onRetry: () => ref.invalidate(
+                    savedRequestsControllerProvider,
+                  ),
                 ),
                 data: (state) {
                   if (state.collections.isEmpty && state.requests.isEmpty) {
@@ -562,7 +564,7 @@ class _EmptyLibrary extends StatelessWidget {
 
 
 class _CollectionsError extends StatelessWidget {
-  const _CollectionsError({required this.onRetry});
+  const new({required this.onRetry});
 
   final VoidCallback onRetry;
 
