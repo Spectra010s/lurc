@@ -292,8 +292,10 @@ class _EnvironmentMenu extends StatelessWidget {
     tooltip: active == null
         ? 'Select environment'
         : 'Environment: ${active!.name}',
-    icon: Icon(
-      active == null ? Icons.tune_outlined : Icons.tune,
+    icon: Badge(
+      isLabelVisible: active != null,
+      smallSize: 7,
+      child: Icon(active == null ? Icons.tune_outlined : Icons.tune),
     ),
     onSelected: (value) {
       if (value == '__manage__') {
