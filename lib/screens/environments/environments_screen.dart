@@ -81,9 +81,7 @@ class EnvironmentsScreen extends ConsumerWidget {
                       unawaited(_editEnvironment(context, ref, environment));
                     } else if (value == 'delete') {
                       unawaited(
-                        ref
-                            .read(environmentsControllerProvider.notifier)
-                            .delete(environment.id),
+                        _deleteEnvironment(context, ref, environment),
                       );
                     }
                   },
@@ -98,6 +96,36 @@ class EnvironmentsScreen extends ConsumerWidget {
         },
       ),
     );
+  }
+
+  Future<void> _deleteEnvironment(
+    BuildContext context,
+    WidgetRef ref,
+    Environment environment,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete environment?'),
+        content: Text(
+          '“${environment.name}” and its variables will be removed.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    await ref
+        .read(environmentsControllerProvider.notifier)
+        .delete(environment.id);
   }
 
   Future<void> _editEnvironment(
