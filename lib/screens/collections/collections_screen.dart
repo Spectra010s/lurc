@@ -311,7 +311,20 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
         ),
       if (requests.isEmpty &&
           !collections.any((item) => item.parentId == collection.id))
-        const ListTile(title: Text('No saved requests')),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            LurcSpacing.lg,
+            LurcSpacing.sm,
+            LurcSpacing.lg,
+            LurcSpacing.md,
+          ),
+          child: Text(
+            'Empty collection',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
       ...requests.map(_requestTile),
     ],
   );
@@ -415,6 +428,13 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
                         ExpansionTile(
                           key: const PageStorageKey('unfiled'),
                           initiallyExpanded: true,
+                          dense: true,
+                          tilePadding: const EdgeInsets.symmetric(
+                            horizontal: LurcSpacing.sm,
+                          ),
+                          childrenPadding: const EdgeInsets.only(
+                            left: LurcSpacing.md,
+                          ),
                           leading: const Icon(Icons.inventory_2_outlined),
                           title: const Text('Unfiled'),
                           children: state
