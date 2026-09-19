@@ -174,7 +174,12 @@ class _EnvironmentEditorState extends State<_EnvironmentEditor> {
       title: Text(
         widget.environment == null ? 'New environment' : 'Edit environment',
       ),
-      actions: [TextButton(onPressed: _save, child: const Text('Save'))],
+      actions: [
+        TextButton(
+          onPressed: _nameController.text.trim().isEmpty ? null : _save,
+          child: const Text('Save'),
+        ),
+      ],
     ),
     body: ListView(
       padding: const EdgeInsets.all(LurcSpacing.lg),
@@ -182,9 +187,11 @@ class _EnvironmentEditorState extends State<_EnvironmentEditor> {
         TextField(
           controller: _nameController,
           autofocus: widget.environment == null,
+          textInputAction: TextInputAction.next,
+          onChanged: (_) => setState(() {}),
           decoration: const InputDecoration(
             labelText: 'Environment name',
-            border: OutlineInputBorder(),
+            hintText: 'Development',
           ),
         ),
         const SizedBox(height: LurcSpacing.xl),
