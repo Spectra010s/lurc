@@ -117,10 +117,10 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
               style: Theme.of(context).textTheme.titleSmall,
             ),
           ),
-          TextButton.icon(
+          IconButton(
+            tooltip: 'Add row',
             onPressed: _addRow,
-            icon: const Icon(Icons.add, size: 18),
-            label: const Text('Add'),
+            icon: const Icon(Icons.add, size: 20),
           ),
         ],
       ),
@@ -187,18 +187,14 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
       );
 
       if (compact) {
-        return Card(
-          child: Padding(
-            padding: const EdgeInsets.all(LurcSpacing.sm),
-            child: Column(
-              children: [
-                keyField,
-                const SizedBox(height: LurcSpacing.sm),
-                valueField,
-                Align(alignment: Alignment.centerRight, child: actions),
-              ],
-            ),
-          ),
+        return Column(
+          children: [
+            keyField,
+            const SizedBox(height: LurcSpacing.sm),
+            valueField,
+            Align(alignment: Alignment.centerRight, child: actions),
+            const Divider(height: 1),
+          ],
         );
       }
 
