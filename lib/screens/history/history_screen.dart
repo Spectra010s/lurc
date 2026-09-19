@@ -209,11 +209,34 @@ class _HistoryTile extends ConsumerWidget {
           ),
         ),
       ),
-      trailing: IconButton(
-        tooltip: 'Delete request',
-        onPressed: () =>
-            ref.read(requestHistoryProvider.notifier).delete(record.id),
-        icon: const Icon(Icons.delete_outline),
+      trailing: PopupMenuButton<String>(
+        tooltip: 'History actions',
+        onSelected: (value) async {
+          if (value != 'delete') return;
+          final confirmed = await showDialog<bool>(
+            context: context,
+            builder: (dialogContext) => AlertDialog(
+              title: const Text('Delete history entry?'),
+              content: Text(request.url),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(dialogContext, true),
+                  child: const Text('Delete'),
+                ),
+              ],
+            ),
+          );
+          if (confirmed ?? false) {
+            await ref.read(requestHistoryProvider.notifier).delete(record.id);
+          }
+        },
+        itemBuilder: (_) => const [
+          PopupMenuItem(value: 'delete', child: Text('Delete from history')),
+        ],
       ),
     );
   }
