@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lurc/theme/lurc_theme.dart';
 
 class LurcMark extends StatelessWidget {
-  const LurcMark({super.key, this.size = 56});
+  const new({super.key, this.size = 56});
 
   final double size;
 
@@ -23,7 +23,7 @@ class LurcMark extends StatelessWidget {
 }
 
 class _LurcMarkPainter extends CustomPainter {
-  const _LurcMarkPainter({required this.leftColor});
+  const new({required this.leftColor});
 
   final Color leftColor;
 
