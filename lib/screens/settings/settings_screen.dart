@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:lurc/theme/lurc_theme.dart';
 import 'package:lurc/theme/theme_mode_controller.dart';
@@ -36,7 +38,7 @@ class SettingsScreen extends StatelessWidget {
         RadioGroup<ThemeMode>(
           groupValue: themeController.mode,
           onChanged: (mode) {
-            if (mode != null) themeController.setMode(mode);
+            if (mode != null) unawaited(themeController.setMode(mode));
           },
           child: const Column(
             children: [
