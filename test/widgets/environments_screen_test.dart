@@ -20,6 +20,7 @@ void main() {
     await tester.enterText(find.byType(TextField).at(0), 'Development');
     await tester.enterText(find.byType(TextField).at(1), 'host');
     await tester.enterText(find.byType(TextField).at(2), 'https://example.com');
+    await tester.tap(find.byTooltip('Mark as secret'));
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
     expect(find.text('Development'), findsOneWidget);
@@ -32,15 +33,18 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Development'));
     await tester.pumpAndSettle();
-    expect(container.read(activeEnvironmentProvider)?.variables, {
-      'host': 'https://example.com',
-    });
+    final active = container.read(activeEnvironmentProvider)!;
+    expect(active.resolvedVariables, {'host': 'https://example.com'});
+    expect(active.variables.single.secret, isTrue);
 
     await tester.tap(find.byType(PopupMenuButton<String>));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Edit'));
     await tester.pumpAndSettle();
-    expect(find.text('https://example.com'), findsOneWidget);
+    final secretField = tester.widget<TextField>(
+      find.byType(TextField).at(2),
+    );
+    expect(secretField.obscureText, isTrue);
     await tester.enterText(find.byType(TextField).at(0), 'Production');
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
