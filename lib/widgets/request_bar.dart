@@ -32,11 +32,17 @@ class RequestBar extends StatelessWidget {
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 520;
         final methodPicker = SizedBox(
-          width: compact ? 112 : 128,
+          width: compact ? 96 : 112,
           child: DropdownButtonFormField<HttpMethod>(
             initialValue: method,
             isExpanded: true,
-            decoration: const InputDecoration(isDense: true),
+            decoration: const InputDecoration(
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: LurcSpacing.sm,
+                vertical: LurcSpacing.md,
+              ),
+            ),
             onChanged: loading
                 ? null
                 : (value) {
@@ -98,18 +104,14 @@ class RequestBar extends StatelessWidget {
         );
 
         if (compact) {
-          return Column(
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  methodPicker,
-                  const SizedBox(width: LurcSpacing.sm),
-                  Expanded(child: urlField),
-                  const SizedBox(width: LurcSpacing.sm),
-                  compactAction,
-                ],
-              ),
+              methodPicker,
+              const SizedBox(width: LurcSpacing.sm),
+              Expanded(child: urlField),
+              const SizedBox(width: LurcSpacing.sm),
+              compactAction,
             ],
           );
         }
