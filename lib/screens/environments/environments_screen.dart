@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lurc/core/environments/environment.dart';
 import 'package:lurc/core/environments/environment_controller.dart';
+import 'package:lurc/theme/lurc_theme.dart';
 import 'package:lurc/widgets/key_value_editor.dart';
 
 List<EnvironmentVariable> _environmentEntries(List<KeyValueEntry> entries) => [
@@ -38,13 +39,23 @@ class EnvironmentsScreen extends ConsumerWidget {
         data: (items) {
           if (items.isEmpty) return const _EmptyEnvironments();
           return ListView.separated(
-            padding: const EdgeInsets.only(bottom: 96),
+            padding: const EdgeInsets.fromLTRB(
+              LurcSpacing.sm,
+              LurcSpacing.sm,
+              LurcSpacing.sm,
+              96,
+            ),
             itemCount: items.length,
             separatorBuilder: (_, _) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final environment = items[index];
               final active = environment.id == activeId;
-              return ListTile(
+              return Card(
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: LurcSpacing.md,
+                    vertical: LurcSpacing.xs,
+                  ),
                 leading: Icon(
                   active ? Icons.radio_button_checked : Icons.radio_button_off,
                 ),
@@ -73,6 +84,7 @@ class EnvironmentsScreen extends ConsumerWidget {
                     PopupMenuItem(value: 'edit', child: Text('Edit')),
                     PopupMenuItem(value: 'delete', child: Text('Delete')),
                   ],
+                ),
                 ),
               );
             },
@@ -159,7 +171,7 @@ class _EnvironmentEditorState extends State<_EnvironmentEditor> {
       actions: [TextButton(onPressed: _save, child: const Text('Save'))],
     ),
     body: ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(LurcSpacing.lg),
       children: [
         TextField(
           controller: _nameController,
@@ -169,12 +181,12 @@ class _EnvironmentEditorState extends State<_EnvironmentEditor> {
             border: OutlineInputBorder(),
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: LurcSpacing.xl),
         Text(
           'Use variables as {{name}} in URLs, params, headers, and bodies.',
           style: Theme.of(context).textTheme.bodySmall,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: LurcSpacing.sm),
         KeyValueEditor(
           label: 'Variables',
           initialEntries: _variables,
@@ -190,17 +202,30 @@ class _EmptyEnvironments extends StatelessWidget {
   const new();
 
   @override
-  Widget build(BuildContext context) => const Center(
+  Widget build(BuildContext context) => Center(
     child: Padding(
-      padding: EdgeInsets.all(32),
+      padding: const EdgeInsets.all(LurcSpacing.xxl),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.tune_outlined, size: 48),
-          SizedBox(height: 12),
-          Text('No environments yet'),
-          SizedBox(height: 6),
-          Text('Create one to reuse values across your requests.'),
+          Icon(
+            Icons.tune_outlined,
+            size: 44,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(height: LurcSpacing.md),
+          Text(
+            'No environments yet',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: LurcSpacing.sm),
+          Text(
+            'Create one to reuse values across your requests.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
         ],
       ),
     ),
