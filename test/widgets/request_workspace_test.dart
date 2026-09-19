@@ -51,7 +51,9 @@ void main() {
       await tester.pump();
       expect(find.text('Response content'), findsOneWidget);
       await tester.tap(find.text('Request'));
-      await tester.pumpAndSettle();
+      // pump() instead of pumpAndSettle(): the loading spinner in the
+      // Response segment animates forever while loading is true.
+      await tester.pump();
       expect(find.byType(TextField), findsOneWidget);
       await tester.pumpWidget(_host(result: 'Invalid URL'));
       await tester.pump();
