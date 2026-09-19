@@ -18,17 +18,29 @@ class RequestEditor extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: SegmentedButton<RequestBodyType>(
-          showSelectedIcon: false,
-          segments: const [
-            ButtonSegment(value: RequestBodyType.none, label: Text('None')),
-            ButtonSegment(value: RequestBodyType.json, label: Text('JSON')),
-            ButtonSegment(value: RequestBodyType.text, label: Text('Text')),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: DropdownButton<RequestBodyType>(
+          value: mode,
+          underline: const SizedBox.shrink(),
+          borderRadius: BorderRadius.circular(8),
+          items: const [
+            DropdownMenuItem(
+              value: RequestBodyType.none,
+              child: Text('None'),
+            ),
+            DropdownMenuItem(
+              value: RequestBodyType.json,
+              child: Text('JSON'),
+            ),
+            DropdownMenuItem(
+              value: RequestBodyType.text,
+              child: Text('Text'),
+            ),
           ],
-          selected: {mode},
-          onSelectionChanged: (selection) => onModeChanged(selection.first),
+          onChanged: (value) {
+            if (value != null) onModeChanged(value);
+          },
         ),
       ),
       if (mode == RequestBodyType.none)
@@ -46,7 +58,7 @@ class RequestEditor extends StatelessWidget {
         const SizedBox(height: LurcSpacing.md),
         TextField(
           controller: controller,
-          minLines: 8,
+          minLines: 10,
           maxLines: null,
           keyboardType: TextInputType.multiline,
           textInputAction: TextInputAction.newline,
