@@ -4,6 +4,7 @@ import 'package:lurc/core/http/request_body_type.dart';
 import 'package:lurc/core/saved_requests/collection.dart';
 import 'package:lurc/core/saved_requests/saved_request.dart';
 import 'package:lurc/core/saved_requests/saved_requests_repository.dart';
+import 'package:lurc/core/saved_requests/saved_requests_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -159,4 +160,33 @@ void main() {
       expect((await repository.load()).collections.length, 2);
     },
   );
+
+  test(
+    'nested folders persist and deleting a parent reparents children',
+    () async {
+    await repository.saveCollection(const Collection(id: 'root', name: 'API'));
+    await repository.saveCollection(
+      const Collection(id: 'child', name: 'Auth', parentId: 'root'),
+    );
+    var state = await repository.load();
+    expect(state.childCollections('root').single.id, 'child');
+
+    await repository.deleteCollection('root');
+    state = await repository.load();
+    expect(state.collections.single.id, 'child');
+      expect(state.collections.single.parentId, isNull);
+    },
+  );
+
+  test('collection hierarchy rejects cycles', () {
+    expect(
+      () => SavedRequestsState(
+        collections: const [
+          Collection(id: 'a', name: 'A', parentId: 'b'),
+          Collection(id: 'b', name: 'B', parentId: 'a'),
+        ],
+      ),
+      throwsFormatException,
+    );
+  });
 }

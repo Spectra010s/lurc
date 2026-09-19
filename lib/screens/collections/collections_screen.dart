@@ -7,7 +7,7 @@ import 'package:lurc/screens/collections/saved_request_editor_screen.dart';
 
 enum _RequestAction { edit, rename, move, delete }
 
-enum _CollectionAction { rename, delete }
+enum _CollectionAction { newFolder, rename, move, delete }
 
 class CollectionsScreen extends ConsumerStatefulWidget {
   const new({super.key});
@@ -67,14 +67,19 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
       ) ??
       false;
 
-  Future<void> _createCollection() async {
-    final name = await _name('New collection', '', 'Create');
+  Future<void> _createCollection([String? parentId]) async {
+    final name = await _name(
+      parentId == null ? 'New collection' : 'New folder',
+      '',
+      'Create',
+    );
     if (name == null || !mounted) return;
     await _write(
       (controller) => controller.saveCollection(
         Collection(
           id: DateTime.now().microsecondsSinceEpoch.toString(),
           name: name,
+          parentId: parentId,
         ),
       ),
       'Collection created',
@@ -86,6 +91,8 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
     _CollectionAction action,
   ) async {
     switch (action) {
+      case _CollectionAction.newFolder:
+        await _createCollection(collection.id);
       case _CollectionAction.rename:
         final name = await _name('Rename collection', collection.name, 'Save');
         if (name == null || !mounted) return;
@@ -93,6 +100,48 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
           (controller) =>
               controller.saveCollection(collection.copyWith(name: name)),
           'Collection renamed',
+        );
+      case _CollectionAction.move:
+        final state = ref.read(savedRequestsControllerProvider).requireValue;
+        final destination = await showModalBottomSheet<_Destination>(
+          context: context,
+          showDragHandle: true,
+          builder: (context) => SafeArea(
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                const ListTile(title: Text('Move folder')),
+                ListTile(
+                  title: const Text('Top level'),
+                  onTap: () => Navigator.pop(context, const _Destination(null)),
+                ),
+                for (final candidate in state.collections)
+                  if (candidate.id != collection.id &&
+                      !_isDescendant(
+                        state.collections,
+                        candidate,
+                        collection.id,
+                      ))
+                    ListTile(
+                      title: Text(candidate.name),
+                      onTap: () => Navigator.pop(
+                        context,
+                        _Destination(candidate.id),
+                      ),
+                    ),
+              ],
+            ),
+          ),
+        );
+        if (destination == null || !mounted) return;
+        await _write(
+          (controller) => controller.saveCollection(
+            collection.copyWith(
+              parentId: destination.id,
+              clearParent: destination.id == null,
+            ),
+          ),
+          'Folder moved',
         );
       case _CollectionAction.delete:
         final confirmed = await _confirm(
@@ -189,6 +238,81 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
     }
   }
 
+  bool _isDescendant(
+    List<Collection> collections,
+    Collection candidate,
+    String ancestorId,
+  ) {
+    var parentId = candidate.parentId;
+    while (parentId != null) {
+      if (parentId == ancestorId) return true;
+      final matches = collections.where((item) => item.id == parentId);
+      if (matches.isEmpty) return false;
+      parentId = matches.single.parentId;
+    }
+    return false;
+  }
+
+  Widget _collectionTile(
+    Collection collection,
+    List<Collection> collections,
+    List<SavedRequest> requests,
+  ) => ExpansionTile(
+    key: PageStorageKey('collection-${collection.id}'),
+    initiallyExpanded: true,
+    controlAffinity: ListTileControlAffinity.leading,
+    childrenPadding: const EdgeInsets.only(left: 16),
+    title: Row(
+      children: [
+        const Icon(Icons.folder_outlined, size: 20),
+        const SizedBox(width: 8),
+        Expanded(child: Text(collection.name)),
+      ],
+    ),
+    subtitle: Text(_requestCount(requests.length)),
+    trailing: PopupMenuButton<_CollectionAction>(
+      tooltip: 'Actions for ${collection.name}',
+      enabled: !_busy,
+      onSelected: (action) => _collectionAction(collection, action),
+      itemBuilder: (_) => const [
+        PopupMenuItem(
+          value: _CollectionAction.newFolder,
+          child: Text('New folder'),
+        ),
+        PopupMenuItem(
+          value: _CollectionAction.rename,
+          child: Text('Rename collection'),
+        ),
+        PopupMenuItem(
+          value: _CollectionAction.move,
+          child: Text('Move folder'),
+        ),
+        PopupMenuDivider(),
+        PopupMenuItem(
+          value: _CollectionAction.delete,
+          child: Text('Delete collection'),
+        ),
+      ],
+    ),
+    children: [
+      for (final child in collections.where(
+        (item) => item.parentId == collection.id,
+      ))
+        _collectionTile(
+          child,
+          collections,
+          ref
+              .read(savedRequestsControllerProvider)
+              .requireValue
+              .requestsInCollection(child.id),
+        ),
+      if (requests.isEmpty &&
+          !collections.any((item) => item.parentId == collection.id))
+        const ListTile(title: Text('No saved requests')),
+      ...requests.map(_requestTile),
+    ],
+  );
+
   Widget _destinationTile(
     BuildContext context,
     SavedRequest request,
@@ -265,56 +389,12 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
                   return ListView(
                     padding: const EdgeInsets.only(bottom: 96),
                     children: [
-                      for (final collection in state.collections)
-                        ExpansionTile(
-                          key: PageStorageKey('collection-${collection.id}'),
-                          initiallyExpanded: true,
-                          controlAffinity: ListTileControlAffinity.leading,
-                          childrenPadding: const EdgeInsets.only(left: 12),
-                          title: Row(
-                            children: [
-                              const Icon(Icons.folder_outlined, size: 20),
-                              const SizedBox(width: 8),
-                              Expanded(child: Text(collection.name)),
-                            ],
-                          ),
-                          subtitle: Text(
-                            _requestCount(
-                              state.requestsInCollection(collection.id).length,
-                            ),
-                          ),
-                          trailing: PopupMenuButton<_CollectionAction>(
-                            tooltip: 'Actions for ${collection.name}',
-                            enabled: !_busy,
-                            onSelected: (action) =>
-                                _collectionAction(collection, action),
-                            itemBuilder: (_) => const [
-                              PopupMenuItem(
-                                value: _CollectionAction.rename,
-                                child: Text('Rename collection'),
-                              ),
-                              PopupMenuDivider(),
-                              PopupMenuItem(
-                                value: _CollectionAction.delete,
-                                child: Text('Delete collection'),
-                              ),
-                            ],
-                          ),
-                          children: [
-                            if (state
-                                .requestsInCollection(collection.id)
-                                .isEmpty)
-                              const ListTile(
-                                title: Text('No saved requests'),
-                                subtitle: Text(
-                                  'Save a request here or move one from '
-                                  'another collection.',
-                                ),
-                              ),
-                            ...state
-                                .requestsInCollection(collection.id)
-                                .map(_requestTile),
-                          ],
+                      for (final collection
+                          in state.childCollections(null))
+                        _collectionTile(
+                          collection,
+                          state.collections,
+                          state.requestsInCollection(collection.id),
                         ),
                       if (state.requestsInCollection(null).isNotEmpty)
                         ExpansionTile(

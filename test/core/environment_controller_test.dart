@@ -175,6 +175,31 @@ void main() {
     });
   }
 
+  test(
+    'repository migrates legacy variables and persists secret metadata',
+    () async {
+    SharedPreferences.setMockInitialValues({
+      'environments_v1':
+          '[{"id":"legacy","name":"Legacy","variables":{"token":"abc"}}]',
+    });
+    final preferences = await SharedPreferences.getInstance();
+    final repository = LocalEnvironmentRepository(preferences);
+    final legacy = (await repository.load()).single;
+    expect(legacy.resolvedVariables, {'token': 'abc'});
+    expect(legacy.variables.single.secret, isFalse);
+
+    await repository.save(
+      legacy.copyWith(
+        variables: const [
+          EnvironmentVariable(key: 'token', value: 'abc', secret: true),
+        ],
+      ),
+    );
+    final restored = (await repository.load()).single;
+      expect(restored.variables.single.secret, isTrue);
+    },
+  );
+
   test('concurrent repository writes retain every environment', () async {
     final preferences = await SharedPreferences.getInstance();
     final repository = LocalEnvironmentRepository(preferences);

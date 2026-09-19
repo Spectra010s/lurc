@@ -64,7 +64,7 @@ class RequestController extends Notifier<RequestState> {
       if (!ref.mounted) return;
     }
     final variables =
-        ref.read(activeEnvironmentProvider)?.variables ?? const {};
+        ref.read(activeEnvironmentProvider)?.resolvedVariables ?? const {};
     final resolvedUrl = resolveVariables(url.trim(), variables);
     final resolvedBody = body == null
         ? null

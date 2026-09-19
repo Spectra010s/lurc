@@ -138,15 +138,15 @@ void main() {
       const Environment(
         id: 'dev',
         name: 'Development',
-        variables: {
-          'host': 'https://example.com',
-          'path': 'users',
-          'key': 'page',
-          'page': '2',
-          'header': 'Authorization',
-          'token': 'secret',
-          'enabled': 'true',
-        },
+        variables: [
+          EnvironmentVariable(key: 'host', value: 'https://example.com'),
+          EnvironmentVariable(key: 'path', value: 'users'),
+          EnvironmentVariable(key: 'key', value: 'page'),
+          EnvironmentVariable(key: 'page', value: '2'),
+          EnvironmentVariable(key: 'header', value: 'Authorization'),
+          EnvironmentVariable(key: 'token', value: 'secret', secret: true),
+          EnvironmentVariable(key: 'enabled', value: 'true'),
+        ],
       ),
     );
     final client = FakeHttpClient();

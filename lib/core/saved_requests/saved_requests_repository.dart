@@ -92,12 +92,23 @@ class LocalSavedRequestsRepository implements SavedRequestsRepository {
         );
       });
 
-  /// Removing a collection keeps its requests, moving them to unfiled.
+  /// Removing a collection keeps its requests and child folders.
+  /// Requests move to Unfiled and direct children move to the deleted
+  /// collection's parent.
   @override
-  Future<SavedRequestsState> deleteCollection(String id) => _change(
-    (current) => SavedRequestsState(
+  Future<SavedRequestsState> deleteCollection(String id) => _change((current) {
+    final removed = current.collections.firstWhere((value) => value.id == id);
+    return SavedRequestsState(
       collections: current.collections
           .where((value) => value.id != id)
+          .map(
+            (value) => value.parentId == id
+                ? value.copyWith(
+                    parentId: removed.parentId,
+                    clearParent: removed.parentId == null,
+                  )
+                : value,
+          )
           .toList(),
       requests: current.requests
           .map(
@@ -106,8 +117,8 @@ class LocalSavedRequestsRepository implements SavedRequestsRepository {
                 : value,
           )
           .toList(),
-    ),
-  );
+    );
+  });
 
   @override
   Future<SavedRequestsState> deleteRequest(String id) => _change(
