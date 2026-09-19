@@ -93,12 +93,12 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                 ),
               ),
               SizedBox(
-                height: 52,
+                height: 44,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(
                     horizontal: LurcSpacing.lg,
-                    vertical: LurcSpacing.sm,
+                    vertical: LurcSpacing.xs,
                   ),
                   children: [
                     ChoiceChip(
@@ -182,6 +182,11 @@ class _HistoryTile extends ConsumerWidget {
     ].where((value) => value.isNotEmpty).join(' • ');
 
     return ListTile(
+      dense: true,
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: LurcSpacing.lg,
+        vertical: LurcSpacing.xs,
+      ),
       onTap: () => Navigator.pop(context, record),
       title: Text(
         request.url,
@@ -193,7 +198,9 @@ class _HistoryTile extends ConsumerWidget {
         width: 54,
         child: Text(
           request.method.name.toUpperCase(),
-          style: Theme.of(context).textTheme.labelLarge,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
       trailing: IconButton(
