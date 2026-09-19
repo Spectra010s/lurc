@@ -9,13 +9,14 @@ class ResponseView extends StatelessWidget {
     required this.response,
     required this.error,
     required this.loading,
+    this.onRetry,
     super.key,
   });
 
   final HttpResponse? response;
   final String? error;
   final bool loading;
-  final String? semanticLabel;
+  final VoidCallback? onRetry;
 
   String _formattedBody(String body) {
     try {
@@ -43,6 +44,8 @@ class ResponseView extends StatelessWidget {
         icon: Icons.error_outline_rounded,
         title: 'Request failed',
         message: error!,
+        actionLabel: 'Try again',
+        onAction: onRetry,
       );
     }
 
@@ -203,12 +206,17 @@ class _ResponseState extends StatelessWidget {
     required this.message,
     this.loading = false,
     this.semanticLabel,
+    this.actionLabel,
+    this.onAction,
   });
 
   final IconData icon;
   final String title;
   final String message;
   final bool loading;
+  final String? semanticLabel;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) => Semantics(
@@ -245,6 +253,13 @@ class _ResponseState extends StatelessWidget {
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
+          if (actionLabel != null && onAction != null) ...[
+            const SizedBox(height: LurcSpacing.lg),
+            FilledButton.tonal(
+              onPressed: onAction,
+              child: Text(actionLabel!),
+            ),
+          ],
         ],
       ),
     ),
