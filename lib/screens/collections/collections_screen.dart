@@ -403,8 +403,9 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
             Expanded(
               child: library.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, _) =>
-                    Center(child: Text('Could not load collections.\n$error')),
+                error: (error, _) => _CollectionsError(
+                  onRetry: () => ref.invalidate(savedRequestsControllerProvider),
+                ),
                 data: (state) {
                   if (state.collections.isEmpty && state.requests.isEmpty) {
                     return const _EmptyLibrary();
@@ -552,6 +553,49 @@ class _EmptyLibrary extends StatelessWidget {
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+
+class _CollectionsError extends StatelessWidget {
+  const _CollectionsError({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(LurcSpacing.xxl),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.error_outline_rounded,
+            size: 44,
+            color: Theme.of(context).colorScheme.error,
+          ),
+          const SizedBox(height: LurcSpacing.md),
+          Text(
+            'Could not load collections',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: LurcSpacing.sm),
+          Text(
+            'Your saved requests could not be opened. Try loading them again.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: LurcSpacing.lg),
+          OutlinedButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Retry'),
           ),
         ],
       ),
