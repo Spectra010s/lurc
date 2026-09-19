@@ -408,7 +408,21 @@ class _SaveRequestDialogState extends State<_SaveRequestDialog> {
         TextField(
           controller: _nameController,
           autofocus: true,
-          decoration: const InputDecoration(labelText: 'Name'),
+          decoration: const InputDecoration(
+            labelText: 'Name',
+            hintText: 'Get current user',
+          ),
+          textInputAction: TextInputAction.done,
+          onChanged: (_) => setState(() {}),
+          onSubmitted: (_) {
+            final name = _nameController.text.trim();
+            if (name.isNotEmpty) {
+              Navigator.pop(
+                context,
+                _SaveRequestResult(name, _collectionId),
+              );
+            }
+          },
         ),
         const SizedBox(height: 16),
         DropdownButtonFormField<String?>(
@@ -432,13 +446,15 @@ class _SaveRequestDialogState extends State<_SaveRequestDialog> {
         child: const Text('Cancel'),
       ),
       FilledButton(
-        onPressed: () => Navigator.pop(
-          context,
-          _SaveRequestResult(
-            _nameController.text.trim(),
-            _collectionId,
-          ),
-        ),
+        onPressed: _nameController.text.trim().isEmpty
+            ? null
+            : () => Navigator.pop(
+                  context,
+                  _SaveRequestResult(
+                    _nameController.text.trim(),
+                    _collectionId,
+                  ),
+                ),
         child: const Text('Save'),
       ),
     ],
