@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 
+abstract final class LurcColors {
+  static const navy = Color(0xFF12203A);
+  static const emerald = Color(0xFF34D399);
+  static const offWhite = Color(0xFFEAF0F8);
+}
+
 abstract final class LurcSpacing {
   static const double xs = 4;
   static const double sm = 8;
@@ -16,52 +22,52 @@ abstract final class LurcTheme {
   static ThemeData _theme(Brightness brightness) {
     final scheme = brightness == Brightness.dark
         ? const ColorScheme.dark(
-            primary: Color(0xFFF5F5F5),
-            onPrimary: Color(0xFF111111),
-            primaryContainer: Color(0xFF2A2A2A),
-            onPrimaryContainer: Color(0xFFF5F5F5),
-            secondary: Color(0xFFD4D4D4),
-            onSecondary: Color(0xFF171717),
-            secondaryContainer: Color(0xFF262626),
-            onSecondaryContainer: Color(0xFFE5E5E5),
+            primary: LurcColors.emerald,
+            onPrimary: LurcColors.navy,
+            primaryContainer: Color(0xFF173C34),
+            onPrimaryContainer: Color(0xFFC9FBE8),
+            secondary: LurcColors.offWhite,
+            onSecondary: LurcColors.navy,
+            secondaryContainer: Color(0xFF23324A),
+            onSecondaryContainer: LurcColors.offWhite,
             error: Color(0xFFFF6B6B),
-            onError: Color(0xFF1A0000),
-            surface: Color(0xFF0D0D0D),
-            onSurface: Color(0xFFF5F5F5),
-            surfaceContainerLowest: Color(0xFF111111),
-            surfaceContainerLow: Color(0xFF151515),
-            surfaceContainer: Color(0xFF1A1A1A),
-            surfaceContainerHigh: Color(0xFF202020),
-            surfaceContainerHighest: Color(0xFF262626),
-            onSurfaceVariant: Color(0xFFA3A3A3),
-            outline: Color(0xFF525252),
-            outlineVariant: Color(0xFF2B2B2B),
-            inverseSurface: Color(0xFFF5F5F5),
-            onInverseSurface: Color(0xFF171717),
+            onError: Color(0xFF260000),
+            surface: Color(0xFF0D1728),
+            onSurface: LurcColors.offWhite,
+            surfaceContainerLowest: Color(0xFF09111E),
+            surfaceContainerLow: LurcColors.navy,
+            surfaceContainer: Color(0xFF182742),
+            surfaceContainerHigh: Color(0xFF20314F),
+            surfaceContainerHighest: Color(0xFF29405F),
+            onSurfaceVariant: Color(0xFFB6C1D0),
+            outline: Color(0xFF65758D),
+            outlineVariant: Color(0xFF2D405D),
+            inverseSurface: LurcColors.offWhite,
+            onInverseSurface: LurcColors.navy,
           )
         : const ColorScheme.light(
-            primary: Color(0xFF171717),
-            onPrimary: Color(0xFFFFFFFF),
-            primaryContainer: Color(0xFFE8E8E8),
-            onPrimaryContainer: Color(0xFF171717),
-            secondary: Color(0xFF525252),
-            onSecondary: Color(0xFFFFFFFF),
-            secondaryContainer: Color(0xFFEDEDED),
-            onSecondaryContainer: Color(0xFF262626),
+            primary: LurcColors.emerald,
+            onPrimary: LurcColors.navy,
+            primaryContainer: Color(0xFFCFF8E7),
+            onPrimaryContainer: LurcColors.navy,
+            secondary: LurcColors.navy,
+            onSecondary: LurcColors.offWhite,
+            secondaryContainer: Color(0xFFDDE5F0),
+            onSecondaryContainer: LurcColors.navy,
             error: Color(0xFFB42318),
             onError: Color(0xFFFFFFFF),
-            surface: Color(0xFFF7F7F7),
-            onSurface: Color(0xFF171717),
+            surface: Color(0xFFF7F9FC),
+            onSurface: LurcColors.navy,
             surfaceContainerLowest: Color(0xFFFFFFFF),
-            surfaceContainerLow: Color(0xFFF2F2F2),
-            surfaceContainer: Color(0xFFEDEDED),
-            surfaceContainerHigh: Color(0xFFE7E7E7),
-            surfaceContainerHighest: Color(0xFFE0E0E0),
-            onSurfaceVariant: Color(0xFF666666),
-            outline: Color(0xFF8A8A8A),
-            outlineVariant: Color(0xFFE2E2E2),
-            inverseSurface: Color(0xFF202020),
-            onInverseSurface: Color(0xFFF5F5F5),
+            surfaceContainerLow: Color(0xFFF0F4F8),
+            surfaceContainer: Color(0xFFE8EDF4),
+            surfaceContainerHigh: Color(0xFFE0E7F0),
+            surfaceContainerHighest: Color(0xFFD7E0EB),
+            onSurfaceVariant: Color(0xFF526176),
+            outline: Color(0xFF75849A),
+            outlineVariant: Color(0xFFD2DAE5),
+            inverseSurface: LurcColors.navy,
+            onInverseSurface: LurcColors.offWhite,
           );
     final base = ThemeData(
       colorScheme: scheme,
@@ -129,7 +135,7 @@ abstract final class LurcTheme {
       ),
       navigationDrawerTheme: NavigationDrawerThemeData(
         backgroundColor: scheme.surface,
-        indicatorColor: scheme.secondaryContainer,
+        indicatorColor: scheme.primaryContainer,
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
@@ -139,8 +145,8 @@ abstract final class LurcTheme {
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         elevation: 1,
         highlightElevation: 2,
-        backgroundColor: scheme.primaryContainer,
-        foregroundColor: scheme.onPrimaryContainer,
+        backgroundColor: scheme.primary,
+        foregroundColor: scheme.onPrimary,
       ),
     );
   }
