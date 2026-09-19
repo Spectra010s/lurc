@@ -137,15 +137,22 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
     builder: (context, constraints) {
       final compact = constraints.maxWidth < 440;
       final row = _rows[index];
-      final keyField = TextField(
+      final keyField = Semantics(
+        textField: true,
+        label: '${widget.label} key ${index + 1}',
+        child: TextField(
         controller: row.keyController,
         autocorrect: false,
         enableSuggestions: false,
         textInputAction: TextInputAction.next,
         onChanged: (_) => _notifyChanged(),
         decoration: const InputDecoration(hintText: 'Key', isDense: true),
+        ),
       );
-      final valueField = TextField(
+      final valueField = Semantics(
+        textField: true,
+        label: '${widget.label} value ${index + 1}',
+        child: TextField(
         controller: row.valueController,
         obscureText: widget.allowSecrets && row.secret,
         autocorrect: false,
@@ -156,16 +163,21 @@ class _KeyValueEditorState extends State<KeyValueEditor> {
           if (index == _rows.length - 1) _addRow();
         },
         decoration: const InputDecoration(hintText: 'Value', isDense: true),
+        ),
       );
       final actions = Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Tooltip(
-            message: row.enabled ? 'Disable row' : 'Enable row',
-            child: Checkbox(
+          Semantics(
+            label: row.enabled ? 'Disable row' : 'Enable row',
+            button: true,
+            child: Tooltip(
+              message: row.enabled ? 'Disable row' : 'Enable row',
+              child: Checkbox(
               value: row.enabled,
               onChanged: (value) => _setEnabled(index, value ?? true),
               visualDensity: VisualDensity.compact,
+              ),
             ),
           ),
           if (widget.allowSecrets)
