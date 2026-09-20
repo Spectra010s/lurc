@@ -1,18 +1,53 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:lurc/screens/request/request_screen.dart';
+import 'package:lurc/theme/lurc_theme.dart';
+import 'package:lurc/theme/theme_mode_controller.dart';
 
-class LurcApp extends StatelessWidget {
+class LurcApp extends StatefulWidget {
   const new({super.key});
 
   @override
+  State<LurcApp> createState() => _LurcAppState();
+}
+
+class _LurcAppState extends State<LurcApp> {
+  ThemeModeController? _themeController;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(
+      ThemeModeController.load().then((controller) {
+        if (!mounted) return;
+        controller.addListener(_handleThemeChanged);
+        setState(() => _themeController = controller);
+      }),
+    );
+  }
+
+  void _handleThemeChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _themeController
+      ?..removeListener(_handleThemeChanged)
+      ..dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final controller = _themeController;
     return MaterialApp(
       title: 'Lurc',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.black),
-        useMaterial3: true,
-      ),
-      home: const RequestScreen(),
+      theme: LurcTheme.light(),
+      darkTheme: LurcTheme.dark(),
+      themeMode: controller?.mode ?? ThemeMode.system,
+      home: RequestScreen(themeController: controller),
     );
   }
 }

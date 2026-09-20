@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Lurc">
+  <rect width="512" height="512" rx="112" fill="#12203A"/>
+  <rect x="3" y="3" width="506" height="506" rx="109" fill="none" stroke="#34496E" stroke-width="6"/>
+  <path d="M256 116 A140 140 0 0 0 256 396 Z" fill="#EAF0F8" transform="translate(-4 -24)"/>
+  <path d="M256 116 A140 140 0 0 1 256 396 Z" fill="#34D399" transform="translate(4 24)"/>
+</svg>

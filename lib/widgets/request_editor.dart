@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lurc/core/http/request_body_type.dart';
+import 'package:lurc/theme/lurc_theme.dart';
 
 class RequestEditor extends StatelessWidget {
   const new({
@@ -14,40 +15,67 @@ class RequestEditor extends StatelessWidget {
   final ValueChanged<RequestBodyType> onModeChanged;
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Body', style: Theme.of(context).textTheme.titleSmall),
-        const SizedBox(height: 8),
-        SegmentedButton<RequestBodyType>(
-          segments: const [
-            ButtonSegment(value: RequestBodyType.none, label: Text('None')),
-            ButtonSegment(value: RequestBodyType.json, label: Text('JSON')),
-            ButtonSegment(value: RequestBodyType.text, label: Text('Text')),
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Align(
+        alignment: Alignment.centerLeft,
+        child: DropdownButton<RequestBodyType>(
+          value: mode,
+          underline: const SizedBox.shrink(),
+          borderRadius: BorderRadius.circular(8),
+          items: const [
+            DropdownMenuItem(
+              value: RequestBodyType.none,
+              child: Text('None'),
+            ),
+            DropdownMenuItem(
+              value: RequestBodyType.json,
+              child: Text('JSON'),
+            ),
+            DropdownMenuItem(
+              value: RequestBodyType.text,
+              child: Text('Text'),
+            ),
           ],
-          selected: {mode},
-          onSelectionChanged: (selection) => onModeChanged(selection.first),
+          onChanged: (value) {
+            if (value != null) onModeChanged(value);
+          },
         ),
-        if (mode != RequestBodyType.none) ...[
-          const SizedBox(height: 12),
-          TextField(
-            controller: controller,
-            minLines: 5,
-            maxLines: 12,
-            keyboardType: TextInputType.multiline,
-            textInputAction: TextInputAction.newline,
-            autocorrect: false,
-            enableSuggestions: false,
-            decoration: InputDecoration(
-              hintText: mode == RequestBodyType.json
-                  ? '{"key":"value"}'
-                  : 'Request body',
-              border: const OutlineInputBorder(),
+      ),
+      if (mode == RequestBodyType.none)
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: LurcSpacing.xl),
+          child: Text(
+            'This request has no body.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
-        ],
+        )
+      else ...[
+        const SizedBox(height: LurcSpacing.md),
+        TextField(
+          controller: controller,
+          minLines: 10,
+          maxLines: null,
+          keyboardType: TextInputType.multiline,
+          textInputAction: TextInputAction.newline,
+          autocorrect: false,
+          enableSuggestions: false,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            fontFamily: 'monospace',
+            height: 1.5,
+          ),
+          decoration: InputDecoration(
+            hintText: mode == RequestBodyType.json
+                ? '{"key": "value"}'
+                : 'Request body',
+            alignLabelWithHint: true,
+          ),
+        ),
       ],
-    );
-  }
+    ],
+  );
 }

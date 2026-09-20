@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lurc/core/environments/environment.dart';
 import 'package:lurc/core/environments/environment_controller.dart';
+import 'package:lurc/theme/lurc_theme.dart';
 import 'package:lurc/widgets/key_value_editor.dart';
 
 List<EnvironmentVariable> _environmentEntries(List<KeyValueEntry> entries) => [
@@ -26,33 +27,51 @@ class EnvironmentsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Environments')),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton.small(
         onPressed: () => _editEnvironment(context, ref),
-        icon: const Icon(Icons.add),
-        label: const Text('Environment'),
+        tooltip: 'New environment',
+        child: const Icon(Icons.add),
       ),
       body: environments.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) =>
-            Center(child: Text('Could not load environments.\n$error')),
+        error: (_, _) => _EnvironmentError(
+          onRetry: () => ref.invalidate(environmentsControllerProvider),
+        ),
         data: (items) {
           if (items.isEmpty) return const _EmptyEnvironments();
           return ListView.separated(
-            padding: const EdgeInsets.only(bottom: 96),
+            padding: const EdgeInsets.fromLTRB(
+              LurcSpacing.sm,
+              LurcSpacing.sm,
+              LurcSpacing.sm,
+              96,
+            ),
             itemCount: items.length,
             separatorBuilder: (_, _) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final environment = items[index];
               final active = environment.id == activeId;
               return ListTile(
-                leading: Icon(
-                  active ? Icons.radio_button_checked : Icons.radio_button_off,
+                dense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: LurcSpacing.lg,
+                  vertical: LurcSpacing.xs,
                 ),
-                title: Text(environment.name),
+                leading: Icon(
+                  active ? Icons.check_circle : Icons.circle_outlined,
+                  color: active
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                title: Text(
+                  environment.name,
+                  style: active
+                      ? const TextStyle(fontWeight: FontWeight.w600)
+                      : null,
+                ),
                 subtitle: Text(
                   '${environment.variables.length} variable'
-                  '${environment.variables.length == 1 ? '' : 's'}'
-                  '${active ? ' • Active' : ''}',
+                  '${environment.variables.length == 1 ? '' : 's'}',
                 ),
                 onTap: () =>
                     ref.read(activeEnvironmentIdProvider.notifier).selectedId =
@@ -63,9 +82,7 @@ class EnvironmentsScreen extends ConsumerWidget {
                       unawaited(_editEnvironment(context, ref, environment));
                     } else if (value == 'delete') {
                       unawaited(
-                        ref
-                            .read(environmentsControllerProvider.notifier)
-                            .delete(environment.id),
+                        _deleteEnvironment(context, ref, environment),
                       );
                     }
                   },
@@ -80,6 +97,36 @@ class EnvironmentsScreen extends ConsumerWidget {
         },
       ),
     );
+  }
+
+  Future<void> _deleteEnvironment(
+    BuildContext context,
+    WidgetRef ref,
+    Environment environment,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete environment?'),
+        content: Text(
+          '“${environment.name}” and its variables will be removed.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    await ref
+        .read(environmentsControllerProvider.notifier)
+        .delete(environment.id);
   }
 
   Future<void> _editEnvironment(
@@ -156,25 +203,32 @@ class _EnvironmentEditorState extends State<_EnvironmentEditor> {
       title: Text(
         widget.environment == null ? 'New environment' : 'Edit environment',
       ),
-      actions: [TextButton(onPressed: _save, child: const Text('Save'))],
+      actions: [
+        TextButton(
+          onPressed: _nameController.text.trim().isEmpty ? null : _save,
+          child: const Text('Save'),
+        ),
+      ],
     ),
     body: ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(LurcSpacing.lg),
       children: [
         TextField(
           controller: _nameController,
           autofocus: widget.environment == null,
+          textInputAction: TextInputAction.next,
+          onChanged: (_) => setState(() {}),
           decoration: const InputDecoration(
             labelText: 'Environment name',
-            border: OutlineInputBorder(),
+            hintText: 'Development',
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: LurcSpacing.xl),
         Text(
           'Use variables as {{name}} in URLs, params, headers, and bodies.',
           style: Theme.of(context).textTheme.bodySmall,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: LurcSpacing.sm),
         KeyValueEditor(
           label: 'Variables',
           initialEntries: _variables,
@@ -190,17 +244,74 @@ class _EmptyEnvironments extends StatelessWidget {
   const new();
 
   @override
-  Widget build(BuildContext context) => const Center(
+  Widget build(BuildContext context) => Center(
     child: Padding(
-      padding: EdgeInsets.all(32),
+      padding: const EdgeInsets.all(LurcSpacing.xxl),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.tune_outlined, size: 48),
-          SizedBox(height: 12),
-          Text('No environments yet'),
-          SizedBox(height: 6),
-          Text('Create one to reuse values across your requests.'),
+          Icon(
+            Icons.tune_outlined,
+            size: 44,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(height: LurcSpacing.md),
+          Text(
+            'No environments yet',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: LurcSpacing.sm),
+          Text(
+            'Create one to reuse values across your requests.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+
+class _EnvironmentError extends StatelessWidget {
+  const new({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: SingleChildScrollView(
+      padding: const EdgeInsets.all(LurcSpacing.xxl),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.cloud_off_outlined,
+            size: 44,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(height: LurcSpacing.md),
+          Text(
+            'Could not load environments',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: LurcSpacing.sm),
+          Text(
+            'Your environments are still on this device. '
+            'Try loading them again.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: LurcSpacing.lg),
+          FilledButton.tonal(
+            onPressed: onRetry,
+            child: const Text('Retry'),
+          ),
         ],
       ),
     ),

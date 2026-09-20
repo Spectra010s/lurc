@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lurc/core/http/request.dart';
+import 'package:lurc/theme/lurc_theme.dart';
 
 class RequestBar extends StatelessWidget {
   const new({
@@ -20,77 +21,120 @@ class RequestBar extends StatelessWidget {
   final VoidCallback onCancel;
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-      child: Column(
-        children: [
-          TextField(
-            controller: controller,
-            enabled: !loading,
-            keyboardType: TextInputType.url,
-            textInputAction: TextInputAction.go,
-            autocorrect: false,
-            enableSuggestions: false,
-            onSubmitted: (_) {
-              if (!loading) onSend();
-            },
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(
+      LurcSpacing.lg,
+      LurcSpacing.sm,
+      LurcSpacing.lg,
+      LurcSpacing.md,
+    ),
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 520;
+        final methodPicker = SizedBox(
+          width: compact ? 96 : 112,
+          child: DropdownButtonFormField<HttpMethod>(
+            initialValue: method,
+            isExpanded: true,
             decoration: const InputDecoration(
-              labelText: 'Request URL',
-              hintText: 'https://example.com',
-              border: OutlineInputBorder(),
               isDense: true,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: LurcSpacing.sm,
+                vertical: LurcSpacing.md,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: DropdownButtonFormField<HttpMethod>(
-                  initialValue: method,
-                  isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Method',
-                    border: OutlineInputBorder(),
-                    isDense: true,
+            onChanged: loading
+                ? null
+                : (value) {
+                    if (value != null) onMethodChanged(value);
+                  },
+            items: HttpMethod.values
+                .map(
+                  (value) => DropdownMenuItem(
+                    value: value,
+                    child: Text(value.name.toUpperCase()),
                   ),
-                  onChanged: loading
-                      ? null
-                      : (value) {
-                          if (value != null) onMethodChanged(value);
-                        },
-                  items: HttpMethod.values
-                      .map(
-                        (value) => DropdownMenuItem(
-                          value: value,
-                          child: Text(value.name.toUpperCase()),
-                        ),
-                      )
-                      .toList(growable: false),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 2,
-                child: SizedBox(
-                  height: 48,
-                  child: loading
-                      ? OutlinedButton.icon(
-                          onPressed: onCancel,
-                          icon: const Icon(Icons.stop),
-                          label: const Text('Cancel'),
-                        )
-                      : FilledButton.icon(
-                          onPressed: onSend,
-                          icon: const Icon(Icons.send),
-                          label: const Text('Send'),
-                        ),
-                ),
-              ),
-            ],
+                )
+                .toList(growable: false),
           ),
-        ],
-      ),
-    );
-  }
+        );
+        final urlField = Semantics(
+          textField: true,
+          label: 'Request URL',
+          child: TextField(
+          controller: controller,
+          enabled: !loading,
+          keyboardType: TextInputType.url,
+          textInputAction: TextInputAction.go,
+          autocorrect: false,
+          enableSuggestions: false,
+          onSubmitted: (_) {
+            if (!loading) onSend();
+          },
+          decoration: const InputDecoration(
+            hintText: 'https://api.example.com/endpoint',
+            isDense: true,
+          ),
+        ),
+        );
+        final action = SizedBox(
+          height: 48,
+          child: loading
+              ? OutlinedButton.icon(
+                  onPressed: onCancel,
+                  icon: const Icon(Icons.stop_rounded),
+                  label: const Text('Cancel'),
+                )
+              : FilledButton.icon(
+                  onPressed: onSend,
+                  icon: const Icon(Icons.send_rounded),
+                  label: const Text('Send'),
+                ),
+        );
+        final compactAction = Semantics(
+          button: true,
+          label: loading ? 'Cancel request' : 'Send request',
+          child: SizedBox(
+          width: 52,
+          height: 48,
+          child: loading
+              ? IconButton.outlined(
+                  tooltip: 'Cancel request',
+                  onPressed: onCancel,
+                  icon: const Icon(Icons.stop_rounded),
+                )
+              : IconButton.filled(
+                  tooltip: 'Send request',
+                  onPressed: onSend,
+                  icon: const Icon(Icons.send_rounded),
+                ),
+          ),
+        );
+
+        if (compact) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              methodPicker,
+              const SizedBox(width: LurcSpacing.sm),
+              Expanded(child: urlField),
+              const SizedBox(width: LurcSpacing.sm),
+              compactAction,
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            methodPicker,
+            const SizedBox(width: LurcSpacing.sm),
+            Expanded(child: urlField),
+            const SizedBox(width: LurcSpacing.sm),
+            action,
+          ],
+        );
+      },
+    ),
+  );
 }

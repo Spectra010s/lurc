@@ -8,18 +8,25 @@ import 'package:lurc/core/http/request_record.dart';
 import 'package:lurc/core/saved_requests/collection.dart';
 import 'package:lurc/core/saved_requests/saved_request.dart';
 import 'package:lurc/core/saved_requests/saved_requests_controller.dart';
+import 'package:lurc/screens/about/about_screen.dart';
 import 'package:lurc/screens/collections/collections_screen.dart';
 import 'package:lurc/screens/environments/environments_screen.dart';
 import 'package:lurc/screens/history/history_screen.dart';
 import 'package:lurc/screens/request/request_controller.dart';
+import 'package:lurc/screens/settings/settings_screen.dart';
+import 'package:lurc/theme/lurc_theme.dart';
+import 'package:lurc/theme/theme_mode_controller.dart';
 import 'package:lurc/widgets/key_value_editor.dart';
+import 'package:lurc/widgets/lurc_mark.dart';
 import 'package:lurc/widgets/request_bar.dart';
 import 'package:lurc/widgets/request_editor.dart';
 import 'package:lurc/widgets/request_workspace.dart';
 import 'package:lurc/widgets/response_view.dart';
 
 class RequestScreen extends ConsumerStatefulWidget {
-  const new({super.key});
+  const new({required this.themeController, super.key});
+
+  final ThemeModeController? themeController;
 
   @override
   ConsumerState<RequestScreen> createState() => _RequestScreenState();
@@ -116,6 +123,22 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
     );
   }
 
+  Future<void> _openSettings() async {
+    final controller = widget.themeController;
+    if (controller == null) return;
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => SettingsScreen(themeController: controller),
+      ),
+    );
+  }
+
+  Future<void> _openAbout() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(builder: (_) => const AboutScreen()),
+    );
+  }
+
   Future<void> _saveRequest(HttpMethod method) async {
     final library = await ref.read(savedRequestsControllerProvider.future);
     if (!mounted) return;
@@ -180,9 +203,13 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
         ],
       ),
       drawer: _WorkspaceDrawer(
+        activeEnvironment: activeEnvironment,
         onHistory: _openHistory,
         onCollections: _openCollections,
         onEnvironments: _openEnvironments,
+        onSettings: _openSettings,
+        onAbout: _openAbout,
+        settingsEnabled: widget.themeController != null,
       ),
       body: SafeArea(
         top: false,
@@ -206,18 +233,12 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
                     environment: activeEnvironment,
                     onClear: () => environmentController.selectedId = null,
                   ),
-                const TabBar(
-                  tabs: [
-                    Tab(text: 'Params'),
-                    Tab(text: 'Headers'),
-                    Tab(text: 'Body'),
-                  ],
-                ),
+                const _RequestSectionTabs(),
                 Expanded(
                   child: TabBarView(
                     children: [
                       SingleChildScrollView(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(LurcSpacing.lg),
                         child: KeyValueEditor(
                           key: ValueKey('params-$_editorRevision'),
                           label: 'Query parameters',
@@ -226,7 +247,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
                         ),
                       ),
                       SingleChildScrollView(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(LurcSpacing.lg),
                         child: KeyValueEditor(
                           key: ValueKey('headers-$_editorRevision'),
                           label: 'Headers',
@@ -235,7 +256,7 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
                         ),
                       ),
                       SingleChildScrollView(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(LurcSpacing.lg),
                         child: RequestEditor(
                           controller: _bodyController,
                           mode: _bodyMode,
@@ -253,11 +274,32 @@ class _RequestScreenState extends ConsumerState<RequestScreen> {
             response: request.response,
             error: request.error,
             loading: request.loading,
+            onRetry: _sendRequest,
           ),
         ),
       ),
     );
   }
+}
+
+class _RequestSectionTabs extends StatelessWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Theme.of(context).colorScheme.surface,
+    child: const TabBar(
+      isScrollable: true,
+      tabAlignment: TabAlignment.start,
+      dividerHeight: 1,
+      labelPadding: EdgeInsets.symmetric(horizontal: LurcSpacing.lg),
+      tabs: [
+        Tab(text: 'Params'),
+        Tab(text: 'Headers'),
+        Tab(text: 'Body'),
+      ],
+    ),
+  );
 }
 
 class _EnvironmentMenu extends StatelessWidget {
@@ -278,8 +320,10 @@ class _EnvironmentMenu extends StatelessWidget {
     tooltip: active == null
         ? 'Select environment'
         : 'Environment: ${active!.name}',
-    icon: Icon(
-      active == null ? Icons.tune_outlined : Icons.tune,
+    icon: Badge(
+      isLabelVisible: active != null,
+      smallSize: 7,
+      child: Icon(active == null ? Icons.tune_outlined : Icons.tune),
     ),
     onSelected: (value) {
       if (value == '__manage__') {
@@ -330,18 +374,26 @@ class _ActiveEnvironmentBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+    color: Theme.of(context).colorScheme.surfaceContainerLow,
     child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: LurcSpacing.lg,
+        vertical: LurcSpacing.xs,
+      ),
       child: Row(
         children: [
-          const Icon(Icons.tune, size: 16),
-          const SizedBox(width: 8),
+          Icon(
+            Icons.tune,
+            size: 16,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          const SizedBox(width: LurcSpacing.sm),
           Expanded(
             child: Text(
-              '${environment.name} • ${environment.variables.length} variables',
+              environment.name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelMedium,
             ),
           ),
           IconButton(
@@ -384,7 +436,21 @@ class _SaveRequestDialogState extends State<_SaveRequestDialog> {
         TextField(
           controller: _nameController,
           autofocus: true,
-          decoration: const InputDecoration(labelText: 'Name'),
+          decoration: const InputDecoration(
+            labelText: 'Name',
+            hintText: 'Get current user',
+          ),
+          textInputAction: TextInputAction.done,
+          onChanged: (_) => setState(() {}),
+          onSubmitted: (_) {
+            final name = _nameController.text.trim();
+            if (name.isNotEmpty) {
+              Navigator.pop(
+                context,
+                _SaveRequestResult(name, _collectionId),
+              );
+            }
+          },
         ),
         const SizedBox(height: 16),
         DropdownButtonFormField<String?>(
@@ -408,13 +474,15 @@ class _SaveRequestDialogState extends State<_SaveRequestDialog> {
         child: const Text('Cancel'),
       ),
       FilledButton(
-        onPressed: () => Navigator.pop(
-          context,
-          _SaveRequestResult(
-            _nameController.text.trim(),
-            _collectionId,
-          ),
-        ),
+        onPressed: _nameController.text.trim().isEmpty
+            ? null
+            : () => Navigator.pop(
+                  context,
+                  _SaveRequestResult(
+                    _nameController.text.trim(),
+                    _collectionId,
+                  ),
+                ),
         child: const Text('Save'),
       ),
     ],
@@ -430,14 +498,22 @@ class _SaveRequestResult {
 
 class _WorkspaceDrawer extends StatelessWidget {
   const new({
+    required this.activeEnvironment,
     required this.onHistory,
     required this.onCollections,
     required this.onEnvironments,
+    required this.onSettings,
+    required this.onAbout,
+    required this.settingsEnabled,
   });
 
+  final Environment? activeEnvironment;
   final VoidCallback onHistory;
   final VoidCallback onCollections;
   final VoidCallback onEnvironments;
+  final VoidCallback onSettings;
+  final VoidCallback onAbout;
+  final bool settingsEnabled;
 
   @override
   Widget build(BuildContext context) => NavigationDrawer(
@@ -446,42 +522,119 @@ class _WorkspaceDrawer extends StatelessWidget {
       if (index == 1) onCollections();
       if (index == 2) onHistory();
       if (index == 3) onEnvironments();
+      if (index == 4 && settingsEnabled) onSettings();
+      if (index == 5) onAbout();
     },
-    children: const [
+    children: [
       Padding(
-        padding: EdgeInsets.fromLTRB(28, 24, 16, 12),
-        child: Text(
-          'Lurc',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w600,
+        padding: const EdgeInsets.fromLTRB(
+          28,
+          LurcSpacing.xl,
+          LurcSpacing.lg,
+          LurcSpacing.sm,
+        ),
+        child: Row(
+          children: [
+            const LurcMark(size: 32),
+            const SizedBox(width: LurcSpacing.md),
+            Text(
+              'Lurc',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(
+          28,
+          0,
+          LurcSpacing.lg,
+          LurcSpacing.md,
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () {
+            Navigator.pop(context);
+            onEnvironments();
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: LurcSpacing.sm),
+            child: Row(
+              children: [
+                const Icon(Icons.tune_outlined, size: 18),
+                const SizedBox(width: LurcSpacing.sm),
+                Expanded(
+                  child: Text(
+                    activeEnvironment?.name ?? 'No environment',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const Icon(Icons.chevron_right, size: 18),
+              ],
+            ),
           ),
         ),
       ),
-      NavigationDrawerDestination(
+      Padding(
+        padding: const EdgeInsets.fromLTRB(
+          28,
+          LurcSpacing.sm,
+          LurcSpacing.lg,
+          LurcSpacing.xs,
+        ),
+        child: Text(
+          'WORKSPACE',
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.1,
+          ),
+        ),
+      ),
+      const NavigationDrawerDestination(
         icon: Icon(Icons.send_outlined),
         selectedIcon: Icon(Icons.send),
         label: Text('Request'),
       ),
-      NavigationDrawerDestination(
+      const NavigationDrawerDestination(
         icon: Icon(Icons.folder_outlined),
         selectedIcon: Icon(Icons.folder),
         label: Text('Collections'),
       ),
-      NavigationDrawerDestination(
+      const NavigationDrawerDestination(
         icon: Icon(Icons.history),
         label: Text('History'),
       ),
-      Divider(),
-      NavigationDrawerDestination(
+      const Divider(),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(
+          28,
+          LurcSpacing.sm,
+          LurcSpacing.lg,
+          LurcSpacing.xs,
+        ),
+        child: Text(
+          'APP',
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.1,
+          ),
+        ),
+      ),
+      const NavigationDrawerDestination(
         icon: Icon(Icons.tune_outlined),
         label: Text('Environments'),
       ),
       NavigationDrawerDestination(
-        icon: Icon(Icons.settings_outlined),
-        label: Text('Settings'),
+        enabled: settingsEnabled,
+        icon: const Icon(Icons.settings_outlined),
+        label: const Text('Settings'),
       ),
-      NavigationDrawerDestination(
+      const NavigationDrawerDestination(
         icon: Icon(Icons.info_outline),
         label: Text('About'),
       ),

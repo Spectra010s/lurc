@@ -4,6 +4,7 @@ import 'package:lurc/core/saved_requests/collection.dart';
 import 'package:lurc/core/saved_requests/saved_request.dart';
 import 'package:lurc/core/saved_requests/saved_requests_controller.dart';
 import 'package:lurc/screens/collections/saved_request_editor_screen.dart';
+import 'package:lurc/theme/lurc_theme.dart';
 
 enum _RequestAction { edit, rename, move, delete }
 
@@ -260,16 +261,18 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
   ) => ExpansionTile(
     key: PageStorageKey('collection-${collection.id}'),
     initiallyExpanded: true,
+    dense: true,
+    tilePadding: const EdgeInsets.symmetric(horizontal: LurcSpacing.sm),
     controlAffinity: ListTileControlAffinity.leading,
-    childrenPadding: const EdgeInsets.only(left: 16),
+    childrenPadding: const EdgeInsets.only(left: LurcSpacing.md),
     title: Row(
       children: [
         const Icon(Icons.folder_outlined, size: 20),
-        const SizedBox(width: 8),
+        const SizedBox(width: LurcSpacing.sm),
         Expanded(child: Text(collection.name)),
       ],
     ),
-    subtitle: Text(_requestCount(requests.length)),
+    subtitle: requests.isEmpty ? null : Text(_requestCount(requests.length)),
     trailing: PopupMenuButton<_CollectionAction>(
       tooltip: 'Actions for ${collection.name}',
       enabled: !_busy,
@@ -308,7 +311,20 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
         ),
       if (requests.isEmpty &&
           !collections.any((item) => item.parentId == collection.id))
-        const ListTile(title: Text('No saved requests')),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            LurcSpacing.lg,
+            LurcSpacing.sm,
+            LurcSpacing.lg,
+            LurcSpacing.md,
+          ),
+          child: Text(
+            'Empty collection',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
       ...requests.map(_requestTile),
     ],
   );
@@ -333,12 +349,19 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
 
   Widget _requestTile(SavedRequest request) => ListTile(
     key: ValueKey('request-${request.id}'),
+    dense: true,
+    contentPadding: const EdgeInsets.only(
+      left: LurcSpacing.sm,
+      right: LurcSpacing.xs,
+    ),
     onTap: () => Navigator.pop(context, request),
     leading: SizedBox(
       width: 48,
       child: Text(
         request.method.name.toUpperCase(),
-        style: Theme.of(context).textTheme.labelMedium,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          fontWeight: FontWeight.w700,
+        ),
       ),
     ),
     title: Text(request.name),
@@ -368,10 +391,10 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
     final library = ref.watch(savedRequestsControllerProvider);
     return Scaffold(
       appBar: AppBar(title: const Text('Collections')),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton.small(
         onPressed: _busy ? null : _createCollection,
-        icon: const Icon(Icons.create_new_folder_outlined),
-        label: const Text('Collection'),
+        tooltip: 'New collection',
+        child: const Icon(Icons.create_new_folder_outlined),
       ),
       body: SafeArea(
         child: Column(
@@ -380,14 +403,22 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
             Expanded(
               child: library.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, _) =>
-                    Center(child: Text('Could not load collections.\n$error')),
+                error: (error, _) => _CollectionsError(
+                  onRetry: () => ref.invalidate(
+                    savedRequestsControllerProvider,
+                  ),
+                ),
                 data: (state) {
                   if (state.collections.isEmpty && state.requests.isEmpty) {
                     return const _EmptyLibrary();
                   }
                   return ListView(
-                    padding: const EdgeInsets.only(bottom: 96),
+                    padding: const EdgeInsets.fromLTRB(
+                      LurcSpacing.sm,
+                      LurcSpacing.sm,
+                      LurcSpacing.sm,
+                      96,
+                    ),
                     children: [
                       for (final collection
                           in state.childCollections(null))
@@ -400,6 +431,13 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
                         ExpansionTile(
                           key: const PageStorageKey('unfiled'),
                           initiallyExpanded: true,
+                          dense: true,
+                          tilePadding: const EdgeInsets.symmetric(
+                            horizontal: LurcSpacing.sm,
+                          ),
+                          childrenPadding: const EdgeInsets.only(
+                            left: LurcSpacing.md,
+                          ),
                           leading: const Icon(Icons.inventory_2_outlined),
                           title: const Text('Unfiled'),
                           children: state
@@ -471,6 +509,8 @@ class _NameDialogState extends State<_NameDialog> {
         decoration: const InputDecoration(labelText: 'Name'),
         validator: (value) =>
             value == null || value.trim().isEmpty ? 'Enter a name' : null,
+        textInputAction: TextInputAction.done,
+        onChanged: (_) => setState(() {}),
         onFieldSubmitted: (_) => _submit(),
       ),
     ),
@@ -479,7 +519,10 @@ class _NameDialogState extends State<_NameDialog> {
         onPressed: () => Navigator.pop(context),
         child: const Text('Cancel'),
       ),
-      FilledButton(onPressed: _submit, child: Text(widget.action)),
+      FilledButton(
+        onPressed: _name.text.trim().isEmpty ? null : _submit,
+        child: Text(widget.action),
+      ),
     ],
   );
 }
@@ -488,19 +531,73 @@ class _EmptyLibrary extends StatelessWidget {
   const new();
 
   @override
-  Widget build(BuildContext context) => const Center(
+  Widget build(BuildContext context) => Center(
     child: Padding(
-      padding: EdgeInsets.all(32),
+      padding: const EdgeInsets.all(LurcSpacing.xxl),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.folder_open_outlined, size: 48),
-          SizedBox(height: 12),
-          Text('No saved requests yet'),
-          SizedBox(height: 6),
+          Icon(
+            Icons.folder_open_outlined,
+            size: 44,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(height: LurcSpacing.md),
+          Text(
+            'No saved requests yet',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: LurcSpacing.sm),
           Text(
             'Create a collection, then save requests from the '
             'request workspace.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+
+class _CollectionsError extends StatelessWidget {
+  const new({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(LurcSpacing.xxl),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.error_outline_rounded,
+            size: 44,
+            color: Theme.of(context).colorScheme.error,
+          ),
+          const SizedBox(height: LurcSpacing.md),
+          Text(
+            'Could not load collections',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: LurcSpacing.sm),
+          Text(
+            'Your saved requests could not be opened. Try loading them again.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: LurcSpacing.lg),
+          OutlinedButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Retry'),
           ),
         ],
       ),

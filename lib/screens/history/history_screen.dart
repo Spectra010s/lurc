@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lurc/core/http/request.dart';
 import 'package:lurc/core/http/request_record.dart';
 import 'package:lurc/screens/history/history_controller.dart';
+import 'package:lurc/theme/lurc_theme.dart';
 
 class HistoryScreen extends ConsumerStatefulWidget {
   const new({super.key});
@@ -40,15 +41,16 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
       ),
       body: history.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text('Could not load request history.\n$error'),
-          ),
+        error: (error, _) => _HistoryError(
+          onRetry: () => ref.invalidate(requestHistoryProvider),
         ),
         data: (records) {
           if (records.isEmpty) {
-            return const Center(child: Text('No requests yet.'));
+            return const _HistoryState(
+              icon: Icons.history_rounded,
+              title: 'No request history',
+              message: 'Requests you send will appear here for quick reuse.',
+            );
           }
           final query = _searchController.text.trim().toLowerCase();
           final filtered = records.where((record) {
@@ -62,11 +64,18 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
           return Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+                padding: const EdgeInsets.fromLTRB(
+                  LurcSpacing.lg,
+                  LurcSpacing.sm,
+                  LurcSpacing.lg,
+                  LurcSpacing.xs,
+                ),
                 child: SearchBar(
                   controller: _searchController,
-                  hintText: 'Search URL',
+                  hintText: 'Search requests',
                   leading: const Icon(Icons.search),
+                  constraints: const BoxConstraints(minHeight: 48),
+                  elevation: const WidgetStatePropertyAll(0),
                   trailing: _searchController.text.isEmpty
                       ? null
                       : [
@@ -83,12 +92,12 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                 ),
               ),
               SizedBox(
-                height: 52,
+                height: 44,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
+                    horizontal: LurcSpacing.lg,
+                    vertical: LurcSpacing.xs,
                   ),
                   children: [
                     ChoiceChip(
@@ -96,7 +105,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                       selected: _method == null,
                       onSelected: (_) => setState(() => _method = null),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: LurcSpacing.sm),
                     for (final method in HttpMethod.values) ...[
                       ChoiceChip(
                         label: Text(method.name.toUpperCase()),
@@ -110,9 +119,17 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
               ),
               Expanded(
                 child: filtered.isEmpty
-                    ? const Center(child: Text('No matching requests.'))
+                    ? const _HistoryState(
+                        icon: Icons.search_off_rounded,
+                        title: 'No matches',
+                        message: 'Try another URL or request method.',
+                      )
                     : ListView.separated(
                         itemCount: filtered.length,
+                        padding: const EdgeInsets.only(
+                          top: LurcSpacing.xs,
+                          bottom: LurcSpacing.lg,
+                        ),
                         separatorBuilder: (_, _) => const Divider(height: 1),
                         itemBuilder: (context, index) =>
                             _HistoryTile(record: filtered[index]),
@@ -168,6 +185,11 @@ class _HistoryTile extends ConsumerWidget {
     ].where((value) => value.isNotEmpty).join(' • ');
 
     return ListTile(
+      dense: true,
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: LurcSpacing.lg,
+        vertical: LurcSpacing.xs,
+      ),
       onTap: () => Navigator.pop(context, record),
       title: Text(
         request.url,
@@ -179,14 +201,39 @@ class _HistoryTile extends ConsumerWidget {
         width: 54,
         child: Text(
           request.method.name.toUpperCase(),
-          style: Theme.of(context).textTheme.labelLarge,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
-      trailing: IconButton(
-        tooltip: 'Delete request',
-        onPressed: () =>
-            ref.read(requestHistoryProvider.notifier).delete(record.id),
-        icon: const Icon(Icons.delete_outline),
+      trailing: PopupMenuButton<String>(
+        tooltip: 'History actions',
+        onSelected: (value) async {
+          if (value != 'delete') return;
+          final confirmed = await showDialog<bool>(
+            context: context,
+            builder: (dialogContext) => AlertDialog(
+              title: const Text('Delete history entry?'),
+              content: Text(request.url),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(dialogContext, true),
+                  child: const Text('Delete'),
+                ),
+              ],
+            ),
+          );
+          if (confirmed ?? false) {
+            await ref.read(requestHistoryProvider.notifier).delete(record.id);
+          }
+        },
+        itemBuilder: (_) => const [
+          PopupMenuItem(value: 'delete', child: Text('Delete from history')),
+        ],
       ),
     );
   }
@@ -197,4 +244,87 @@ class _HistoryTile extends ConsumerWidget {
     final minute = local.minute.toString().padLeft(2, '0');
     return '${local.month}/${local.day} $hour:$minute';
   }
+}
+
+
+class _HistoryState extends StatelessWidget {
+  const new({
+    required this.icon,
+    required this.title,
+    required this.message,
+  });
+
+  final IconData icon;
+  final String title;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(LurcSpacing.xxl),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 44,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(height: LurcSpacing.md),
+          Text(title, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: LurcSpacing.sm),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+
+class _HistoryError extends StatelessWidget {
+  const new({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(LurcSpacing.xxl),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.error_outline_rounded,
+            size: 44,
+            color: Theme.of(context).colorScheme.error,
+          ),
+          const SizedBox(height: LurcSpacing.md),
+          Text(
+            'Could not load history',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: LurcSpacing.sm),
+          Text(
+            'Your local request history could not be opened.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: LurcSpacing.lg),
+          OutlinedButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Retry'),
+          ),
+        ],
+      ),
+    ),
+  );
 }
