@@ -15,7 +15,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     env:
-      LURC_KEYSTORE_PATH: android/app/lurc-release.jks
+      LURC_KEYSTORE_PATH: ${{ github.workspace }}/android/app/lurc-release.jks
       LURC_KEYSTORE_PASSWORD: ${{ secrets.LURC_KEYSTORE_PASSWORD }}
       LURC_KEY_ALIAS: ${{ secrets.LURC_KEY_ALIAS }}
       LURC_KEY_PASSWORD: ${{ secrets.LURC_KEY_PASSWORD }}
