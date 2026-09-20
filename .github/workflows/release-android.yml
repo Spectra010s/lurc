@@ -3,8 +3,6 @@ name: Android release
 on:
   workflow_dispatch:
   push:
-    branches:
-      - 9-phase-5-quality-and-android-release-readiness
     tags:
       - 'v*'
 
