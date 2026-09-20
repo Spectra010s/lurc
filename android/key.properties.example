@@ -1,0 +1,9 @@
+# Copy this file to android/key.properties for local release builds.
+# Keep android/key.properties private; it is ignored by git.
+#
+# storeFile may be an absolute path or a path relative to android/app.
+
+storeFile=/absolute/path/to/lurc-release.jks
+storePassword=replace-me
+keyAlias=lurc
+keyPassword=replace-me
