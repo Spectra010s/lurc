@@ -88,7 +88,8 @@ abstract final class LurcTheme {
         foregroundColor: scheme.onSurface,
         titleTextStyle: base.textTheme.titleLarge?.copyWith(
           color: scheme.onSurface,
-          fontWeight: FontWeight.w600,
+          fontSize: 24,
+          fontWeight: FontWeight.w700,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
