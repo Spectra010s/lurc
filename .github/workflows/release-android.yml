@@ -85,9 +85,44 @@ jobs:
           ls -lh
           sha256sum * > SHA256SUMS.txt
 
-      - name: Upload release artifacts
+      - name: Upload universal APK
         uses: actions/upload-artifact@v6
         with:
-          name: lurc-android-release
-          path: build/release-artifacts/
+          name: lurc-universal
+          path: build/release-artifacts/lurc-universal.apk
+          if-no-files-found: error
+
+      - name: Upload ARM64 APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: lurc-arm64-v8a
+          path: build/release-artifacts/lurc-arm64-v8a.apk
+          if-no-files-found: error
+
+      - name: Upload ARMv7 APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: lurc-armeabi-v7a
+          path: build/release-artifacts/lurc-armeabi-v7a.apk
+          if-no-files-found: error
+
+      - name: Upload x86_64 APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: lurc-x86_64
+          path: build/release-artifacts/lurc-x86_64.apk
+          if-no-files-found: error
+
+      - name: Upload Android App Bundle
+        uses: actions/upload-artifact@v6
+        with:
+          name: lurc-aab
+          path: build/release-artifacts/lurc-release.aab
+          if-no-files-found: error
+
+      - name: Upload release checksums
+        uses: actions/upload-artifact@v6
+        with:
+          name: lurc-checksums
+          path: build/release-artifacts/SHA256SUMS.txt
           if-no-files-found: error
