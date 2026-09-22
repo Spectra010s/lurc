@@ -1,7 +1,8 @@
 # Lurc workspace format
 
-A portable Lurc workspace lives in a `.lurc/` directory inside a project.
-Version 1 uses JSON and keeps the format independent from Flutter UI.
+A Lurc workspace is a portable project representation that can live beside source code and be version-controlled with normal Git tooling.
+
+A workspace uses a `.lurc/` directory:
 
 ```text
 .lurc/
@@ -11,15 +12,43 @@ Version 1 uses JSON and keeps the format independent from Flutter UI.
   environments.json
 ```
 
-`workspace.json` contains `{"version":1,"name":"..."}`. Requests and
-collections use the same JSON records as Lurc's local models. Environment
-records contain variable keys and a `secret` marker, but **secret values are
-never written to the workspace**. A secret variable is serialized with an empty
-value and must be supplied locally on each device.
+The current format version is **1**.
 
-App-local history, active-environment selection, and private secret values are
-not workspace data.
+## `workspace.json`
 
-Opening a workspace reads it in place through a format adapter. Importing is a
-different operation: it converts another format into Lurc data. Future adapters
-must implement the adapter contract without requiring request UI changes.
+Describes the workspace itself.
+
+```json
+{
+  "version": 1,
+  "name": "Example API"
+}
+```
+
+The `version` field identifies the workspace schema version. Readers should reject unsupported versions instead of silently interpreting them as a different format.
+
+## Requests and collections
+
+`requests.json` contains the requests saved in the workspace. `collections.json` contains the collections used to organize them.
+
+Workspace requests preserve the same request information Lurc needs to reopen and send them: method, URL, query parameters, headers, body, and body type.
+
+## Environments and secrets
+
+`environments.json` contains workspace environment definitions.
+
+Environment entries may identify a variable as secret, but secret values are not written into the portable workspace. A secret is serialized without its private value and must be supplied locally on each device.
+
+This keeps a version-controlled workspace from becoming a place where API tokens or other credentials are accidentally committed.
+
+## Local state versus workspace state
+
+A workspace is portable project data. It does not contain every piece of Lurc's app-local state.
+
+Request history, the currently selected environment, and locally supplied secret values remain local to the app.
+
+## Opening and importing
+
+Opening a native Lurc workspace reads the project in place.
+
+Importing another format is different: an adapter converts that external representation into Lurc's neutral workspace model. This distinction allows Lurc to support other API-client formats without coupling the request UI to any one of them.

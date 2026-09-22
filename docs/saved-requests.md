@@ -1,50 +1,23 @@
 # Saved requests and collections
 
-This foundation lives in `lib/core/saved_requests/`. UI and navigation integration
-are intentionally left to the request-workspace worktree.
+Lurc can keep requests you want to reuse instead of rebuilding them every time.
 
-## Integration
+## Saving a request
 
-- Watch `savedRequestsControllerProvider` for loading, error, and library state.
-- Watch `collectionsProvider` for collections, or
-  `savedRequestsInCollectionProvider(collectionId)` for a collection's requests.
-  Pass `null` for unfiled requests.
-- Use the controller's `saveCollection` and `saveRequest` methods to create or
-  update records. IDs are supplied by the caller and remain stable on updates.
-- Use `SavedRequest.copyWith(collectionId: id)` to move a request, or
-  `copyWith(clearCollection: true)` to unfile it.
-- `SavedRequest.toSnapshot()` restores the existing `RequestSnapshot`, including
-  `RequestBodyType`. Query parameters, headers, raw body text, and empty values
-  are preserved. `toHttpRequest()` provides transport data directly.
-- Await mutations and handle their errors in the UI. State is published only
-  after persistence succeeds; failed mutations leave the last successful state
-  visible. Invalidate the controller provider to retry a failed initial load.
+A saved request keeps the request method, URL, query parameters, headers, body, and body type. Saving a request does not send it.
 
-## Persistence contract
+Saved requests can be reopened in the request workspace, edited, and sent again.
 
-The default repository uses the existing SharedPreferences dependency under
-`saved_requests_collections_v1`. It does not read or change request history.
-Collections and requests share a versioned JSON snapshot so collection deletion
-and request reassignment are written together. Deleting a collection unfiles its
-requests; deleting a request leaves its collection intact.
+## Collections
 
-Use the provider's single repository instance: operations on that instance are
-queued to prevent lost updates. Independent writers from other isolates are not
-supported. SharedPreferences is local storage, not encrypted secret storage or a
-database with guaranteed crash durability.
+Collections are folders for organizing saved requests. A request can belong to one collection or remain unfiled.
 
-Malformed data, unknown schema versions, duplicate IDs, empty IDs/names, and
-orphaned collection references fail explicitly. They are not reset or overwritten.
-The request URL may be empty so unfinished drafts can be saved; execution-time
-validation remains the request workspace's responsibility.
+Renaming a collection keeps its requests in place. Deleting a collection does not delete the requests inside it; those requests become unfiled instead.
 
-## Verification
+## What is stored locally
 
-```sh
-dart format --output=none --set-exit-if-changed lib/core/saved_requests test/core/saved_requests
-flutter analyze
-flutter test test/core/saved_requests
-```
+Saved requests and collections are stored on the device as Lurc application data.
 
-Tests cover round trips, restoration, immutable metadata, CRUD, collection
-deletion, concurrent writes, corrupt data, history isolation, and provider state.
+This storage is intended for normal API-client state, not as a secure secrets vault. If a saved request contains sensitive headers, tokens, or request-body values, those values remain part of the local saved request.
+
+Uninstalling Lurc removes its app-private local data unless Android restores it through a platform backup mechanism.

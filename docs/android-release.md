@@ -1,48 +1,54 @@
-# Android release checklist
+# Android releases
 
-Lurc's Android release builds are signed with the project release keystore and produced by GitHub Actions.
+Lurc publishes signed Android builds from GitHub Actions.
 
-## Release inputs
+A release is triggered by pushing a version tag that matches `v*`. The release workflow builds the Android packages, computes checksums, and publishes the resulting files to a GitHub Release.
 
-Repository Actions secrets:
+## Release artifacts
+
+Each tagged release produces:
+
+- `lurc-arm64-v8a.apk` for most modern Android phones
+- `lurc-armeabi-v7a.apk` for older 32-bit ARM devices
+- `lurc-x86_64.apk` for x86_64 Android devices and emulators
+- `lurc-universal.apk` as an architecture-independent fallback
+- `lurc-release.aab` for store distribution
+- `SHA256SUMS.txt` containing the SHA-256 checksum of every release artifact
+
+GitHub Actions also keeps the build outputs as workflow artifacts.
+
+## Signing
+
+Release builds are signed with Lurc's Android release key. The key itself is never committed to the repository.
+
+The workflow reads these repository secrets:
 
 - `LURC_KEYSTORE_BASE64`
 - `LURC_KEYSTORE_PASSWORD`
 - `LURC_KEY_ALIAS`
 - `LURC_KEY_PASSWORD`
 
-The release keystore itself must never be committed. Keep at least one private backup outside the development device.
+`LURC_KEYSTORE_BASE64` is simply the release keystore encoded as Base64 so GitHub Actions can reconstruct the binary file during a build. The original keystore must be kept in a secure private backup. Losing it would prevent future builds from updating existing installations signed with that key.
 
-## Android review
+For local signing, copy `android/key.properties.example` to `android/key.properties` and fill in the local values. Neither the keystore nor `key.properties` should be committed.
 
-Lurc currently requests only `android.permission.INTERNET`.
+## Publishing a release
 
-`android:usesCleartextTraffic="true"` is intentional. Lurc is an API client and must be able to call local-development and explicitly HTTP endpoints as well as HTTPS endpoints. Users should prefer HTTPS for sensitive traffic.
+Before creating a version tag, make sure the version in `pubspec.yaml` is the version being released and that the current main branch has passed CI.
 
-No storage, contacts, camera, microphone, location, or notification permission is required by the current feature set.
+Create and push the tag:
 
-## Local storage review
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
 
-History, saved requests, environments, and preferences are stored locally through `shared_preferences`.
+The tag starts `.github/workflows/release-android.yml`. The workflow runs analysis and tests, builds the signed APKs and AAB, generates checksums, and creates the GitHub Release with generated release notes and the files attached.
 
-Request history:
+If the workflow fails, fix the failure before recreating or moving the release tag.
 
-- is stored under the `request_history_v1` preferences key;
-- retains at most 100 request records;
-- stores request method, URL, headers, query parameters, request body, status code, and duration;
-- does not persist response bodies.
+## Android networking
 
-Saved requests and environments are also persisted as JSON-backed preference values. This data is app-private on Android but is not an encrypted secrets store. Sensitive headers, request bodies, and environment values should therefore be treated as local application data rather than hardware-backed secret storage.
+Lurc requests only the Android Internet permission.
 
-## Before tagging
-
-1. Confirm `flutter analyze` passes.
-2. Confirm `flutter test` passes.
-3. Confirm the signed ARM64 release APK installs and launches on a physical Android device.
-4. Send a request and verify response rendering.
-5. Verify history, saved requests/collections, environments, and theme switching.
-6. Confirm the version in `pubspec.yaml` matches the intended tag.
-7. Confirm the release workflow contains no temporary development-branch trigger.
-8. Tag the merged commit as `v<version>`, for example `v0.1.0`.
-
-The tag-triggered release workflow produces separate universal, ARM64, ARMv7, and x86_64 APK artifacts, an Android App Bundle, and SHA-256 checksums.
+Cleartext HTTP traffic is intentionally allowed because an API client must be able to reach local-development and explicitly HTTP endpoints. HTTPS should still be used for sensitive traffic.
