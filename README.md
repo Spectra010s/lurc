@@ -1,73 +1,59 @@
-# Lurc
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/branding/lurc-banner-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="docs/branding/lurc-banner-light.svg">
+    <img alt="Lurc — API client for your phone" src="docs/branding/lurc-banner-light.svg" width="720">
+  </picture>
+</p>
 
-Lurc is a native Android API client built for developers who need to inspect, build, send, and revisit HTTP requests directly from a phone.
+Lurc is a local-first Android API client built for developers who want to build, send, inspect, save, and revisit HTTP requests directly from a phone.
 
-The project is built with Flutter and Dart. HTTP requests are handled locally on-device; Lurc does not require a remote backend to send requests.
+Requests are sent from the device through Dio; Lurc does not proxy them through a remote backend.
+
+## Current features
+
+- GET, POST, PUT, PATCH, and DELETE requests.
+- Query parameters and request headers.
+- JSON/text request bodies.
+- Response status, timing, headers, and formatted body inspection.
+- Local request history with reopen/resend flows.
+- Saved requests and collections.
+- Environments and variable resolution across URLs, query parameters, headers, and bodies.
+- Light/dark theme support with Lurc branding.
+- Native Android launcher icon and splash screen.
 
 ## Status
 
-Lurc is in active early development. The request pipeline works on Android and has been tested against a local HTTP server, but the request workspace, persistence, organization, UI, and release experience still need substantial work.
+Lurc is in active development and is currently in **Phase 5: quality and Android release readiness**. Core request, history, collection, environment, and mobile workspace flows are implemented. The current work is focused on automated quality gates, release signing, Android release artifacts, permissions/network review, and release metadata.
 
 ## Development roadmap
 
-Development is organized into phases. Each phase is tracked by GitHub issues and implemented through focused branches and pull requests. If implementation exposes a separate bug or prerequisite, it should be tracked as a linked issue instead of silently expanding the original task.
+Development is organized into phases and tracked through GitHub issues.
 
-### Phase 0 — Foundation and cleanup
+### Completed
 
-- Adopt Riverpod for application and request state management.
-- Adopt Very Good Analysis and establish project lint rules.
-- Remove the temporary APK installation control project and its CI steps.
-- Keep Android CI producing an installable Lurc debug APK.
-- Establish the initial Lurc theme and replace temporary/default branding assets.
+- **Phase 0 — Foundation and cleanup:** Riverpod, Very Good Analysis, CI foundation, and project cleanup.
+- **Phase 1 — Request workspace:** request construction, validation, sending, cancellation/error handling, and response inspection.
+- **Phase 2 — History and local persistence:** persisted history, reopen/resend, filtering, and cleanup.
+- **Phase 3 — Saved requests and organization:** saved requests, collections, environments, and variables.
+- **Phase 4 — Mobile UX and polish:** mobile workspace refinement, theme/branding, launcher icon, splash screen, settings, and recoverable UI states.
 
-### Phase 1 — Request workspace
+### Current
 
-- Refine the method and URL request bar.
-- Build a proper query-parameter editor.
-- Build a proper request-header editor.
-- Add request-body modes, beginning with JSON/text and expanding where useful.
-- Improve request validation, loading, cancellation, and error handling.
-- Build a useful response viewer for status, timing, headers, and body.
-- Add readable JSON formatting and response presentation.
+**Phase 5 — Quality and Android release readiness**
 
-### Phase 2 — History and local persistence
-
-- Persist sent requests locally.
-- Build request history.
-- Reopen, edit, and resend historical requests.
-- Search/filter history and clear individual or all entries.
-- Preserve enough response metadata for useful inspection without uncontrolled storage growth.
-
-### Phase 3 — Saved requests and organization
-
-- Save reusable requests.
-- Organize saved requests into collections/folders.
-- Add environments and variables for reusable values.
-- Define import/export behavior for portable request data.
-
-### Phase 4 — Mobile UX and polish
-
-- Finalize Lurc's visual language, colors, typography, spacing, and component states.
-- Add the final launcher/adaptive icon from the authoritative Lurc logo.
-- Add a native splash screen using the final logo asset.
-- Improve keyboard, scrolling, tab switching, editing, and small-screen behavior.
-- Add settings and theme preferences where useful.
-- Improve empty, loading, success, and failure states throughout the app.
-
-### Phase 5 — Quality and release readiness
-
-- Expand unit and widget tests around request construction, state, persistence, and critical UI flows.
-- Add CI analysis/tests alongside Android builds.
+- Expand unit and widget coverage around request construction, state, persistence, and critical UI flows.
+- Keep static analysis and tests as CI quality gates.
 - Configure proper Android release signing.
-- Produce release APK/AAB artifacts.
-- Review performance, storage behavior, permissions, error reporting, and release metadata.
+- Produce release APK and AAB artifacts.
+- Review permissions, Android networking, performance, storage growth, versioning, and release metadata.
 
-## Current architecture
+## Architecture
 
 ```text
 Flutter UI
     |
-request / application state
+Riverpod application state
     |
 HTTP core
     |
@@ -78,16 +64,31 @@ Android networking
 Internet / local network
 ```
 
-The architecture will evolve as features are implemented, but Lurc should remain local-first: requests are sent from the device rather than proxied through a Lurc server.
+Lurc is intentionally local-first: request data and HTTP traffic stay on the device unless the user explicitly sends data to the target API.
 
-## Contributing / workflow
+## Development
 
-Work should normally start from a GitHub issue. Keep each implementation focused enough to review in a pull request. When a task reveals a distinct bug, prerequisite, or follow-up, create and link another issue, resolve it separately when appropriate, then return to the phase roadmap.
+Lurc currently targets Flutter 3.47.3 and Dart 3.13.3.
+
+```bash
+flutter pub get
+flutter analyze
+flutter test
+flutter run
+```
+
+Android CI runs analysis and tests before producing build artifacts.
+
+## Contributing
+
+Work should normally start from a GitHub issue and land through a focused pull request. Keep unrelated fixes separate when practical so changes remain reviewable and the roadmap stays clear.
 
 ## Tech
 
 - Flutter
 - Dart
+- Riverpod
 - Dio
-- Riverpod (planned foundation)
+- SharedPreferences
+- Very Good Analysis
 - Android

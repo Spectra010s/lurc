@@ -12,6 +12,29 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
+  test('caps persisted history at 100 newest entries', () async {
+    final preferences = await SharedPreferences.getInstance();
+    final repository = RequestHistoryRepository(preferences);
+
+    for (var index = 0; index < 101; index++) {
+      await repository.save(
+        RequestRecord(
+          id: '$index',
+          sentAt: DateTime.utc(2026, 9, 17).add(Duration(seconds: index)),
+          request: RequestSnapshot(
+            method: HttpMethod.get,
+            url: 'https://example.com/$index',
+          ),
+        ),
+      );
+    }
+
+    final records = repository.load();
+    expect(records, hasLength(RequestHistoryRepository.maxEntries));
+    expect(records.first.id, '100');
+    expect(records.last.id, '1');
+  });
+
   test('saves, loads, deletes, and clears history', () async {
     final preferences = await SharedPreferences.getInstance();
     final repository = RequestHistoryRepository(preferences);
