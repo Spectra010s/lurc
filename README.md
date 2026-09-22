@@ -24,7 +24,7 @@ Requests are sent from the device through Dio; Lurc does not proxy them through 
 
 ## Status
 
-Lurc is in active development and is currently in **Phase 5: quality and Android release readiness**. Core request, history, collection, environment, and mobile workspace flows are implemented. The current work is focused on automated quality gates, release signing, Android release artifacts, permissions/network review, and release metadata.
+Lurc v0.1.0 is the first public Android release. Core request, history, collection, environment, and mobile workspace flows are implemented, and active development continues with authentication and broader API-client capabilities next.
 
 ## Development roadmap
 
@@ -38,15 +38,9 @@ Development is organized into phases and tracked through GitHub issues.
 - **Phase 3 — Saved requests and organization:** saved requests, collections, environments, and variables.
 - **Phase 4 — Mobile UX and polish:** mobile workspace refinement, theme/branding, launcher icon, splash screen, settings, and recoverable UI states.
 
-### Current
+### Released
 
-**Phase 5 — Quality and Android release readiness**
-
-- Expand unit and widget coverage around request construction, state, persistence, and critical UI flows.
-- Keep static analysis and tests as CI quality gates.
-- Configure proper Android release signing.
-- Produce release APK and AAB artifacts.
-- Review permissions, Android networking, performance, storage growth, versioning, and release metadata.
+- **v0.1.0:** first public Android release with signed APK/AAB builds and automated release quality gates.
 
 ## Architecture
 
