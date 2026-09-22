@@ -26,22 +26,6 @@ Requests are sent from the device through Dio; Lurc does not proxy them through 
 
 Lurc v0.1.0 is the first public Android release. Core request, history, collection, environment, and mobile workspace flows are implemented, and active development continues with authentication and broader API-client capabilities next.
 
-## Development roadmap
-
-Development is organized into phases and tracked through GitHub issues.
-
-### Completed
-
-- **Phase 0 — Foundation and cleanup:** Riverpod, Very Good Analysis, CI foundation, and project cleanup.
-- **Phase 1 — Request workspace:** request construction, validation, sending, cancellation/error handling, and response inspection.
-- **Phase 2 — History and local persistence:** persisted history, reopen/resend, filtering, and cleanup.
-- **Phase 3 — Saved requests and organization:** saved requests, collections, environments, and variables.
-- **Phase 4 — Mobile UX and polish:** mobile workspace refinement, theme/branding, launcher icon, splash screen, settings, and recoverable UI states.
-
-### Released
-
-- **v0.1.0:** first public Android release with signed APK/AAB builds and automated release quality gates.
-
 ## Architecture
 
 ```text
